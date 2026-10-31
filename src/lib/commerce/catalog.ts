@@ -201,7 +201,7 @@ const showcaseRank = (slug: string) => {
 
 /** Best foot forward inside a category: featured, then pieces with more photos/colours, then premium. */
 const appeal = (p: Product) =>
-  (p.isFeatured ? 1000 : 0) + Math.min(p.images.length, 4) * 20 + Math.min(p.availableColors.length, 3) * 15 + Math.min(p.price / 50, 15);
+  (p.isFeatured ? 1000 : 0) + (p.isBestseller ? 300 : 0) + Math.min(p.images.length, 4) * 20 + Math.min(p.availableColors.length, 3) * 15 + Math.min(p.price / 50, 15);
 
 /** "Faded Wash Fleece Trousers – Purple" and "– Red" are the same style; keep them apart. */
 const styleName = (p: Product) => p.title.split(/\s[–-]\s/)[0].trim().toLowerCase();
@@ -220,51 +220,63 @@ function bestFirstVaried(list: Product[]): Product[] {
 }
 
 /**
- * Mix categories: the first row shows one of each lead category (suit, shirt,
- * shoes…), then every category is spread evenly through the rest of the list
- * so a big category (e.g. trousers) never clumps, and the same category is not
- * placed twice in a row when another one is nearly as "due".
+ * Visual family used to keep similar-looking items apart: formal and casual shoes
+ * are both "shoes", ties and belts are both "accessories", and so on. Works for
+ * categories added later in the admin too (matched by name).
+ */
+function family(p: Product): string {
+  const t = `${p.category} ${p.categoryName}`.toLowerCase();
+  if (/shoe|boot|sneaker|loafer|footwear|oxford/.test(t)) return 'shoes';
+  if (/shirt/.test(t)) return 'shirts';
+  if (/suit|tux|blazer|jacket|coat|outer/.test(t)) return 'tailoring';
+  if (/access|tie|belt|cuff|square|sock|wallet/.test(t)) return 'accessories';
+  return p.category;
+}
+
+/**
+ * Even mix: categories are interleaved in proportion to their size (so a big
+ * category never clumps at the end), and the same family (e.g. two pairs of
+ * shoes) is never placed next to — or one apart from — itself when anything
+ * else is available. Within a category the most appealing pieces come first.
  */
 function spread(products: Product[]): Product[] {
+  const n = products.length;
+  if (n < 2) return products;
   const groups = new Map<string, Product[]>();
   for (const p of products) groups.set(p.category, [...(groups.get(p.category) ?? []), p]);
   const cats = Array.from(groups.entries())
     .sort(([a], [b]) => showcaseRank(a) - showcaseRank(b))
-    .map(([c, list]) => ({ c, q: bestFirstVaried(list), used: 0, rem: 0, placed: 0 }));
+    .map(([c, list]) => ({ c, fam: family(list[0]), q: bestFirstVaried(list), used: 0 }));
 
   const out: Product[] = [];
-  for (const x of cats.slice(0, 4)) out.push(x.q[x.used++]);
-
-  for (const x of cats) x.rem = x.q.length - x.used;
-  const total = products.length - out.length;
-  let prev = out.length ? out[out.length - 1].category : null;
-  for (let k = 1; k <= total; k++) {
-    const due = (x: (typeof cats)[number]) => (x.rem * k) / total - x.placed;
-    const avail = cats
-      .filter((x) => x.used < x.q.length)
-      .sort((a, b) => due(b) - due(a) || showcaseRank(a.c) - showcaseRank(b.c));
-    const pick = avail[0].c === prev && avail[1] && due(avail[1]) > due(avail[0]) - 1 ? avail[1] : avail[0];
+  const recent: string[] = [];
+  for (let k = 1; k <= n; k++) {
+    const avail = cats.filter((x) => x.used < x.q.length);
+    // How far behind its fair share each category is at this position.
+    const due = (x: (typeof cats)[number]) => (x.q.length * k) / n - x.used;
+    avail.sort((a, b) => due(b) - due(a) || showcaseRank(a.c) - showcaseRank(b.c));
+    const families = new Set(avail.map((x) => x.fam));
+    const window = Math.min(2, families.size - 1);
+    const blocked = new Set(recent.slice(-window));
+    const pick =
+      avail.find((x) => !blocked.has(x.fam)) ??
+      avail.find((x) => x.fam !== recent[recent.length - 1]) ??
+      avail[0];
     out.push(pick.q[pick.used++]);
-    pick.placed++;
-    prev = pick.c;
+    recent.push(pick.fam);
   }
   return out;
 }
 
 /**
- * Presentable default order: featured pieces lead, then everything else with
- * categories mixed evenly (suits first in each "round"), the most
- * appealing pieces of each category first, colour versions kept apart, and
+ * Presentable default order: one balanced mix of every category (featured and
+ * best pieces lead within each category), colour versions kept apart, and
  * sold-out pieces at the very end.
  */
 export function arrange(products: Product[]): Product[] {
   const inStock = products.filter((p) => p.totalStock > 0);
   const soldOut = products.filter((p) => p.totalStock <= 0);
-  return [
-    ...spread(inStock.filter((p) => p.isFeatured)),
-    ...spread(inStock.filter((p) => !p.isFeatured)),
-    ...spread(soldOut),
-  ];
+  return [...spread(inStock), ...spread(soldOut)];
 }
 
 /** Newest pieces, at most one per category, so "New arrivals" shows the range. */
