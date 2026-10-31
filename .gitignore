@@ -17,5 +17,4 @@ yarn-error.log*
 *.zip
 
 # Raw product photo folders (upload photos through the admin instead)
-Products/
 product photos/
