@@ -6,10 +6,7 @@ import { GarmentArt } from './GarmentArt';
 import { WishlistButton } from './WishlistButton';
 
 export function ProductCard({ product, priority }: { product: Product; priority?: boolean }) {
-  const [main, hover] = [
-    product.images[0],
-    product.images.find((i) => i.isHover) ?? product.images[1],
-  ];
+  const main = product.images.find((i) => i.isPrimary) ?? product.images[0];
   const soldOut = product.totalStock === 0;
   const badge = soldOut ? 'Sold out' : product.isNewArrival ? 'New' : null;
 
@@ -17,21 +14,13 @@ export function ProductCard({ product, priority }: { product: Product; priority?
     <Link href={`/products/${product.slug}`} className="group block">
       <div className="relative aspect-[4/5] overflow-hidden bg-surface-2">
         {main ? (
-          <>
-            <Img
-              src={main.url}
-              alt={main.alt}
-              priority={priority}
-              className="tile-photo object-cover object-top transition-transform duration-700 group-hover:scale-[1.03]"
-            />
-            {hover && (
-              <Img
-                src={hover.url}
-                alt={hover.alt}
-                className="tile-photo object-cover object-top opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-              />
-            )}
-          </>
+          // One photo with a slow, gentle zoom on hover (no second-photo swap, which looked doubled).
+          <Img
+            src={main.url}
+            alt={main.alt}
+            priority={priority}
+            className="tile-photo object-cover object-top transition-transform duration-[1200ms] ease-out group-hover:scale-[1.035]"
+          />
         ) : (
           <GarmentArt category={product.category} title={product.title} color={product.availableColors[0]?.hex} />
         )}

@@ -200,8 +200,16 @@ const showcaseRank = (slug: string) => {
 };
 
 /** Best foot forward inside a category: featured, then pieces with more photos/colours, then premium. */
+/** Small, stable-for-the-day number per product, so the order rotates daily but never jumps mid-visit. */
+function dailyJitter(id: string) {
+  const day = new Date().toISOString().slice(0, 10);
+  let h = 2166136261;
+  for (const ch of day + id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return ((h >>> 0) % 1000) / 1000; // 0..1
+}
+
 const appeal = (p: Product) =>
-  (p.isFeatured ? 1000 : 0) + (p.isBestseller ? 300 : 0) + Math.min(p.images.length, 4) * 20 + Math.min(p.availableColors.length, 3) * 15 + Math.min(p.price / 50, 15);
+  dailyJitter(p.id) * 90 + (p.isFeatured ? 1000 : 0) + (p.isBestseller ? 300 : 0) + Math.min(p.images.length, 4) * 20 + Math.min(p.availableColors.length, 3) * 15 + Math.min(p.price / 50, 15);
 
 /** "Faded Wash Fleece Trousers – Purple" and "– Red" are the same style; keep them apart. */
 const styleName = (p: Product) => p.title.split(/\s[–-]\s/)[0].trim().toLowerCase();
@@ -233,11 +241,16 @@ function family(p: Product): string {
   return p.category;
 }
 
+/** "Worn" pieces (usually photographed on a model) vs "objects" (shoes, accessories): alternate them. */
+const look = (fam: string) => (fam === 'tailoring' || fam === 'shirts' ? 'worn' : 'object');
+
 /**
- * Even mix: categories are interleaved in proportion to their size (so a big
- * category never clumps at the end), and the same family (e.g. two pairs of
- * shoes) is never placed next to — or one apart from — itself when anything
- * else is available. Within a category the most appealing pieces come first.
+ * Even, good-looking mix. At every position each category is scored and the best one wins:
+ *  - categories are interleaved in proportion to their size (big ones never clump at the end);
+ *  - the same family (e.g. two pairs of shoes) is never side by side, nor directly above/below
+ *    on the 4-column grid, nor one apart, when anything else is available;
+ *  - "worn" pieces and "objects" alternate, and similar colours are kept apart.
+ * Within a category the most appealing pieces come first (featured, bestsellers, then a daily rotation).
  */
 function spread(products: Product[]): Product[] {
   const n = products.length;
@@ -249,21 +262,31 @@ function spread(products: Product[]): Product[] {
     .map(([c, list]) => ({ c, fam: family(list[0]), q: bestFirstVaried(list), used: 0 }));
 
   const out: Product[] = [];
-  const recent: string[] = [];
+  const fams: string[] = [];
   for (let k = 1; k <= n; k++) {
-    const avail = cats.filter((x) => x.used < x.q.length);
-    // How far behind its fair share each category is at this position.
-    const due = (x: (typeof cats)[number]) => (x.q.length * k) / n - x.used;
-    avail.sort((a, b) => due(b) - due(a) || showcaseRank(a.c) - showcaseRank(b.c));
-    const families = new Set(avail.map((x) => x.fam));
-    const window = Math.min(2, families.size - 1);
-    const blocked = new Set(recent.slice(-window));
-    const pick =
-      avail.find((x) => !blocked.has(x.fam)) ??
-      avail.find((x) => x.fam !== recent[recent.length - 1]) ??
-      avail[0];
+    const i = k - 1; // position being filled
+    const prevFam = fams[i - 1];
+    const prevColour = out[i - 1]?.variants[0]?.colorFamily;
+    let best: (typeof cats)[number] | null = null;
+    let bestScore = -Infinity;
+    for (const x of cats) {
+      if (x.used >= x.q.length) continue;
+      const next = x.q[x.used];
+      let score = ((x.q.length * k) / n - x.used) * 10; // fair share
+      if (x.fam === prevFam) score -= 100; // side by side
+      if (x.fam === fams[i - 4]) score -= 35; // directly above (4 columns)
+      if (x.fam === fams[i - 2]) score -= 25; // one apart / above on 2 columns
+      if (prevFam && look(x.fam) === look(prevFam)) score -= 12; // alternate worn / objects
+      if (prevColour && next.variants[0]?.colorFamily === prevColour) score -= 6; // similar colours apart
+      score -= showcaseRank(x.c) * 0.01; // stable tie-break
+      if (score > bestScore) {
+        bestScore = score;
+        best = x;
+      }
+    }
+    const pick = best!;
     out.push(pick.q[pick.used++]);
-    recent.push(pick.fam);
+    fams.push(pick.fam);
   }
   return out;
 }

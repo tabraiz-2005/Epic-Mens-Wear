@@ -47,10 +47,13 @@ export default async function HomePage() {
   ]);
   const newest = newestMix(all, 4);
   const newIds = new Set(newest.map((p) => p.id));
-  const featuredRest = arrange(all.filter((p) => p.isFeatured && !newIds.has(p.id))).slice(0, 4);
+  // "The essentials" only when it fills a whole row of 4.
+  const featuredPool = arrange(all.filter((p) => p.isFeatured && !newIds.has(p.id)));
+  const featuredRest = featuredPool.length >= 4 ? featuredPool.slice(0, 4) : [];
   const shownIds = new Set(newest.concat(featuredRest).map((p) => p.id));
   const everything = arrange(all.filter((p) => !shownIds.has(p.id)));
-  const ALL_LIMIT = 12;
+  // Whole rows only (4 per row on desktop), up to 3 rows.
+  const ALL_LIMIT = everything.length >= 12 ? 12 : everything.length >= 4 ? everything.length - (everything.length % 4) : everything.length;
   const heroPhoto = settings.hero_image_url;
   const embed = mapsEmbed(settings);
   const maps = mapsLink(settings);
