@@ -28,6 +28,7 @@ const config: Config = {
       fontFamily: {
         display: ['"Jost Variable"', 'Jost', 'Futura', 'Century Gothic', 'system-ui', 'sans-serif'],
         sans: ['"Inter Variable"', 'Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Cormorant Garamond"', 'Cormorant', 'Garamond', 'Georgia', 'serif'],
       },
       letterSpacing: {
         label: '0.22em',
@@ -38,11 +39,15 @@ const config: Config = {
         site: '1860px',
       },
       keyframes: {
+        veilIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        logoBreath: { '0%,100%': { opacity: '.55', transform: 'scale(.985)' }, '50%': { opacity: '1', transform: 'scale(1)' } },
         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
         slideIn: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } },
         rise: { '0%': { opacity: '0', transform: 'translateY(12px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
       },
       animation: {
+        'veil-in': 'veilIn .28s ease-out both',
+        'logo-breath': 'logoBreath 1.6s ease-in-out infinite',
         'fade-in': 'fadeIn .25s ease-out both',
         'slide-in': 'slideIn .35s cubic-bezier(.2,.8,.2,1) both',
         rise: 'rise .5s cubic-bezier(.2,.8,.2,1) both',

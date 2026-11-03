@@ -1,133 +1,133 @@
 import Link from 'next/link';
-import { Clock, Mail, MapPin, Phone } from 'lucide-react';
 import type { NavCategory } from './Header';
 import type { StoreSettings } from '@/lib/commerce/types';
 import { formatPhone, telLink } from '@/lib/phone';
 import { Logo } from './Logo';
+import { NewsletterForm } from './NewsletterForm';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { mapsLink } from '@/lib/commerce/local';
 
+function Col({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h3 className="nav-label text-[11px] font-semibold text-fg">{title}</h3>
+      <ul className="mt-6 space-y-3.5 text-[14px] text-fg/70">{children}</ul>
+    </div>
+  );
+}
+
+const A = ({ href, children }: { href: string; children: React.ReactNode }) => (
+  <li>
+    <Link href={href} className="transition-colors hover:text-fg">{children}</Link>
+  </li>
+);
+
 export function Footer({ settings, categories }: { settings: StoreSettings; categories: NavCategory[] }) {
-  const cols = [
-    {
-      title: 'Shop',
-      links: [
-        { href: '/men', label: 'Men' },
-        ...categories.map((c) => ({ href: `/shop?category=${c.slug}`, label: c.name })),
-        { href: '/shop?sort=newest', label: 'New arrivals' },
-        { href: '/sale', label: 'Sale' },
-      ],
-    },
-    {
-      title: 'Client care',
-      links: [
-        { href: '/shipping', label: 'Shipping' },
-        { href: '/returns', label: 'Returns & exchanges' },
-        { href: '/size-guide', label: 'Size guide' },
-        { href: '/faq', label: 'FAQ' },
-        { href: '/about', label: 'About Epic' },
-        { href: '/contact', label: 'Contact & store' },
-      ],
-    },
-    {
-      title: 'Legal',
-      links: [
-        { href: '/terms', label: 'Terms of sale' },
-        { href: '/privacy', label: 'Privacy policy' },
-        { href: '/admin', label: 'Staff login' },
-      ],
-    },
-  ];
   const phones = [settings.contact_phone, settings.contact_phone_2].filter(Boolean) as string[];
-  const instaHandle = settings.instagram_url?.replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '');
-  const tiktokHandle = settings.tiktok_url?.replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/, '').replace(/[/?].*$/, '');
+  const maps = mapsLink(settings);
+  const socials = [
+    settings.instagram_url && { href: settings.instagram_url, label: 'Instagram', icon: (
+      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+        <rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
+      </svg>
+    ) },
+    settings.tiktok_url && { href: settings.tiktok_url, label: 'TikTok', icon: (
+      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden>
+        <path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9a6.3 6.3 0 1 0 5.3 6.2V8.6a8 8 0 0 0 4.4 1.3V6.6a4.6 4.6 0 0 1-4.4-4.6Z" />
+      </svg>
+    ) },
+  ].filter(Boolean) as { href: string; label: string; icon: React.ReactNode }[];
 
   return (
-    <footer className="mt-24 border-t border-line">
-      <div className="site-x grid gap-12 py-16 md:grid-cols-[1.5fr_repeat(3,1fr)] lg:py-20">
-        <div>
-          <Logo className="w-[170px] text-fg" title={settings.store_name} />
-          <p className="mt-4 font-display text-sm text-muted">“{settings.tagline}”</p>
-          <p className="mt-2 font-display text-[11px] uppercase tracking-label text-subtle">Eastridge Center · San Jose, CA</p>
-
-          <ul className="mt-8 space-y-3 text-sm">
-            {settings.address && (
-              <li>
-                <a
-                  href={mapsLink(settings) ?? '#'}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-start gap-3 text-fg/85 hover:text-fg"
-                >
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" strokeWidth={1.6} /> {settings.address}
-                </a>
-              </li>
-            )}
-            {settings.opening_hours && (
-              <li className="flex items-start gap-3 text-fg/85">
-                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-brand" strokeWidth={1.6} /> {settings.opening_hours}
-              </li>
-            )}
-            {phones.map((p) => (
-              <li key={p}>
-                <a href={telLink(p) ?? '#'} className="flex items-center gap-3 text-fg/85 hover:text-fg">
-                  <Phone className="h-4 w-4 shrink-0 text-brand" strokeWidth={1.6} /> {formatPhone(p) || p}
-                </a>
-              </li>
-            ))}
-            {settings.contact_email && (
-              <li>
-                <a href={`mailto:${settings.contact_email}`} className="flex items-center gap-3 text-fg/85 hover:text-fg">
-                  <Mail className="h-4 w-4 shrink-0 text-brand" strokeWidth={1.6} /> {settings.contact_email}
-                </a>
-              </li>
-            )}
-            {settings.instagram_url && (
-              <li>
-                <a href={settings.instagram_url} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-fg/85 hover:text-fg">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-                    <rect x="3" y="3" width="18" height="18" rx="5" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
-                  </svg>
-                  @{instaHandle}
-                </a>
-              </li>
-            )}
-            {settings.tiktok_url && (
-              <li>
-                <a href={settings.tiktok_url} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-fg/85 hover:text-fg">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-brand" fill="currentColor" aria-hidden>
-                    <path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9a6.3 6.3 0 1 0 5.3 6.2V8.6a8 8 0 0 0 4.4 1.3V6.6a4.6 4.6 0 0 1-4.4-4.6Z" />
-                  </svg>
-                  TikTok @{tiktokHandle}
-                </a>
-              </li>
-            )}
-          </ul>
+    <footer className="mt-28">
+      {/* Newsletter */}
+      <section id="newsletter" className="scroll-mt-40 border-y border-line bg-surface">
+        <div className="site-x py-16 text-center lg:py-20">
+          <p className="nav-label text-[11px] text-muted">Newsletter</p>
+          <h2 className="serif-title mx-auto mt-4 max-w-xl text-[34px] sm:text-[42px]">The world of {settings.store_name}</h2>
+          <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-muted">
+            New arrivals, private sales and styling notes for every occasion, delivered a few times a month.
+          </p>
+          <NewsletterForm />
         </div>
-        {cols.map((col) => (
-          <div key={col.title}>
-            <h3 className="label text-fg">{col.title}</h3>
-            <ul className="mt-6 space-y-3.5">
-              {col.links.map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="font-display text-[13px] uppercase tracking-[0.14em] text-muted hover:text-brand">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+      </section>
+
+      {/* Columns */}
+      <div className="site-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4 lg:py-20">
+        <Col title="Client service">
+          <A href="/contact">Contact us</A>
+          <A href="/shipping">Shipping</A>
+          <A href="/returns">Orders & returns</A>
+          <A href="/size-guide">Size guide</A>
+          <A href="/faq">FAQ</A>
+          <A href="/wishlist">Wishlist</A>
+        </Col>
+        <Col title="Shop">
+          <A href="/shop?sort=newest">New arrivals</A>
+          {categories.map((c) => (
+            <A key={c.slug} href={`/men?category=${c.slug}`}>{c.name}</A>
+          ))}
+          <A href="/sale">Sale</A>
+        </Col>
+        <Col title="The store">
+          {settings.address && (
+            <li className="leading-relaxed">
+              {maps ? (
+                <a href={maps} target="_blank" rel="noreferrer" className="hover:text-fg">{settings.address}</a>
+              ) : (
+                settings.address
+              )}
+            </li>
+          )}
+          {settings.opening_hours && <li>{settings.opening_hours}</li>}
+          {phones.map((p) => (
+            <li key={p}><a href={telLink(p) ?? '#'} className="hover:text-fg">{formatPhone(p) || p}</a></li>
+          ))}
+          {settings.contact_email && (
+            <li><a href={`mailto:${settings.contact_email}`} className="hover:text-fg">{settings.contact_email}</a></li>
+          )}
+          {maps && (
+            <li>
+              <a href={maps} target="_blank" rel="noreferrer" className="nav-label text-[11px] text-fg underline underline-offset-[6px]">
+                Get directions
+              </a>
+            </li>
+          )}
+        </Col>
+        <Col title="Company">
+          <A href="/about">Our world</A>
+          <A href="/terms">Terms of sale</A>
+          <A href="/privacy">Privacy policy</A>
+          <A href="/admin">Staff login</A>
+        </Col>
+      </div>
+
+      {/* Follow us */}
+      {socials.length > 0 && (
+        <div className="site-x flex flex-wrap items-center justify-center gap-6 border-t border-line py-8">
+          <span className="nav-label text-[11px] text-muted">Follow us on</span>
+          {socials.map((s) => (
+            <a key={s.label} href={s.href} target="_blank" rel="noreferrer" aria-label={s.label} className="text-fg/70 transition-colors hover:text-fg">
+              {s.icon}
+            </a>
+          ))}
+        </div>
+      )}
+
+      {/* Bottom bar */}
+      <div className="border-t border-line">
+        <div className="site-x grid items-center gap-5 py-7 text-[12px] text-muted lg:grid-cols-[1fr_auto_1fr]">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 lg:justify-start">
+            <span>Ship to: United States · USD $</span>
+            <ThemeToggle variant="text" />
           </div>
-        ))}
-      </div>
-      <div className="site-x flex justify-center overflow-hidden pb-6 text-fg/[0.06]">
-        <Logo className="w-full max-w-[900px]" title="" mono />
-      </div>
-      <div className="site-x flex flex-col gap-3 border-t border-line py-6 font-display text-[11px] uppercase tracking-label text-subtle sm:flex-row sm:justify-between">
-        <span>
-          © {new Date().getFullYear()} {settings.store_name} · San Jose, California
-        </span>
-        <span>Prices in USD · Secure card payments · Shipping across the US</span>
+          <Link href="/" className="mx-auto block text-fg" aria-label={`${settings.store_name} home`}>
+            <Logo title="" className="w-[96px]" />
+          </Link>
+          <p className="text-center lg:text-right">
+            © {new Date().getFullYear()} {settings.store_name} · San Jose, California
+          </p>
+        </div>
       </div>
     </footer>
   );

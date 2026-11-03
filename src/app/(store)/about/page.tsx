@@ -51,7 +51,7 @@ export default async function About() {
     <div className="site-x pt-10 lg:pt-14">
       <div className="mx-auto max-w-3xl text-center">
         <p className="eyebrow">Our story</p>
-        <h1 className="display mt-4 text-[40px] lg:text-[60px]">About Epic</h1>
+        <h1 className="serif-title mt-4 text-[44px] lg:text-[64px]">About Epic</h1>
         <p className="mx-auto mt-6 max-w-2xl text-[17px] leading-relaxed text-fg/85 lg:text-[19px]">
           Suits, shirts and shoes from Eastridge Center in San Jose, now delivered across the US.
         </p>

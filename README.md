@@ -76,6 +76,10 @@ Open `https://YOUR-DOMAIN/admin` → **Create owner account** → use the email 
 
 ---
 
+## Newsletter sign-ups
+The footer newsletter form saves emails to the `newsletter_subscribers` table (included in `supabase/setup.sql`,
+or run `supabase/parts/08_newsletter.sql` on its own). See sign-ups in Supabase → Table Editor → newsletter_subscribers.
+
 ## Everyday tasks (all in `/admin`)
 
 | I want to… | Go to |

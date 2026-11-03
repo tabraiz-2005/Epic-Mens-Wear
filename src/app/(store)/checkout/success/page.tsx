@@ -23,7 +23,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
   if (!sessionId?.startsWith('cs_')) {
     return (
       <Shell>
-        <h1 className="display text-4xl">Invalid confirmation link</h1>
+        <h1 className="serif-title text-4xl">Invalid confirmation link</h1>
         <Link href="/" className="btn-primary mt-10">Return to the store</Link>
       </Shell>
     );
@@ -35,7 +35,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
   } catch {
     return (
       <Shell>
-        <h1 className="display text-4xl">Confirmation unavailable</h1>
+        <h1 className="serif-title text-4xl">Confirmation unavailable</h1>
         <p className="mt-4 text-sm text-muted">If you completed a payment, your order is safe — contact us and we’ll confirm it.</p>
       </Shell>
     );
@@ -72,7 +72,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
     return (
       <Shell>
         <Clock className="mx-auto h-10 w-10 text-gold" strokeWidth={1.4} />
-        <h1 className="display mt-6 text-4xl">Payment processing</h1>
+        <h1 className="serif-title mt-6 text-4xl">Payment processing</h1>
         <p className="mt-4 text-sm text-muted">Your payment hasn’t been confirmed yet. We’ll email you as soon as it is.</p>
       </Shell>
     );
@@ -85,7 +85,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
         <Check className="h-7 w-7" />
       </div>
       <p className="eyebrow mt-8">Payment confirmed{order?.order_number ? ` // ${order.order_number}` : ''}</p>
-      <h1 className="display mt-4 text-5xl">Thank you{order?.customer_first_name ? `, ${order.customer_first_name}` : ''}</h1>
+      <h1 className="serif-title mt-4 text-5xl">Thank you{order?.customer_first_name ? `, ${order.customer_first_name}` : ''}</h1>
       <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-muted">
         Your order has been received
         {order?.customer_email ? ` and a receipt is on its way to ${order.customer_email}.` : '.'} We’ll send tracking details

@@ -1,15 +1,48 @@
 import Link from 'next/link';
-import { ArrowUpRight, MapPin, Truck, RotateCcw } from 'lucide-react';
-import { arrange, getCollections, getProducts, getSettings, newestMix } from '@/lib/commerce/catalog';
+import { ArrowRight, MapPin, RotateCcw, Truck } from 'lucide-react';
+import { arrange, getCategories, getCollections, getProducts, getSettings, newestMix } from '@/lib/commerce/catalog';
+import type { Product } from '@/lib/commerce/types';
 import { ProductCard } from '@/components/store/ProductCard';
 import { GarmentArt } from '@/components/store/GarmentArt';
 import { Img } from '@/components/ui/Img';
 import { formatCents } from '@/lib/utils';
+import { mapsEmbed, mapsLink } from '@/lib/commerce/local';
+
+function SectionHead({ eyebrow, title, href, linkLabel }: { eyebrow: string; title: string; href?: string; linkLabel?: string }) {
+  return (
+    <div className="mb-10 text-center lg:mb-14">
+      <p className="nav-label text-[11px] text-muted">{eyebrow}</p>
+      <h2 className="serif-title mt-3 text-[34px] sm:text-[42px] lg:text-[48px]">{title}</h2>
+      {href && (
+        <Link href={href} className="nav-label mt-5 inline-flex items-center gap-2 text-[11px] underline underline-offset-[6px] hover:opacity-70">
+          {linkLabel} <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function Grid({ products }: { products: Product[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 md:grid-cols-3 lg:gap-x-6 lg:gap-y-14 xl:grid-cols-4">
+      {products.map((p, i) => (
+        <ProductCard key={p.id} product={p} priority={i < 2} />
+      ))}
+    </div>
+  );
+}
+
+const STILL_LIFE = [
+  { title: 'Classic Two-Piece Suit', color: '#1E2A3F' },
+  { title: 'French Cuff Dress Shirt', color: '#F2F2EF' },
+  { title: 'Leather Oxford Shoes', color: '#3E2A1E' },
+];
 
 export default async function HomePage() {
-  const [settings, collections, all] = await Promise.all([
+  const [settings, collections, categories, all] = await Promise.all([
     getSettings(),
     getCollections(),
+    getCategories(),
     getProducts({ sort: 'recent' }),
   ]);
   const newest = newestMix(all, 4);
@@ -17,115 +50,125 @@ export default async function HomePage() {
   const featuredRest = arrange(all.filter((p) => p.isFeatured && !newIds.has(p.id))).slice(0, 4);
   const shownIds = new Set(newest.concat(featuredRest).map((p) => p.id));
   const everything = arrange(all.filter((p) => !shownIds.has(p.id)));
-  const ALL_LIMIT = 24;
+  const ALL_LIMIT = 12;
+  const heroPhoto = settings.hero_image_url;
+  const embed = mapsEmbed(settings);
+  const maps = mapsLink(settings);
+
+  // One tile per category, using a real product photo when there is one.
+  const catTiles = categories
+    .filter((c) => c.itemCount > 0)
+    .map((c) => {
+      const inCat = arrange(all.filter((p) => p.category === c.slug));
+      const withPhoto = inCat.find((p) => p.images.length > 0);
+      return { c, photo: withPhoto?.images[0]?.url, alt: withPhoto?.images[0]?.alt, sample: inCat[0] };
+    });
 
   return (
     <>
-      {/* Campaign hero */}
-      <section className="relative h-[calc(100svh-154px)] lg:h-[calc(100svh-110px)] min-h-[560px] overflow-hidden border-b border-line bg-black">
-        {settings.hero_image_url ? (
-          <Img
-            src={settings.hero_image_url}
-            alt={settings.hero_title}
-            sizes="100vw"
-            priority
-            className="object-cover object-[72%_center] lg:object-center"
-          />
-        ) : (
-          <div className="absolute inset-0 lg:left-[38%]">
-            <GarmentArt title="Classic Two-Piece Suit" color="#1E2A3F" className="bg-surface" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent lg:bg-gradient-to-r lg:from-black/80 lg:via-black/35 lg:via-[38%] lg:to-transparent lg:to-[62%]" />
-        <div className="site-x relative flex h-full flex-col justify-end pb-14 lg:justify-center lg:pb-0">
-          <div className="max-w-[720px] text-white">
-            <p className="font-display text-[11px] uppercase tracking-[0.32em] text-white/75 sm:text-[12px]">{settings.hero_eyebrow}</p>
-            <h1 className="mt-4 font-display text-[40px] font-light uppercase leading-[1.02] tracking-[0.06em] sm:text-[56px] lg:text-[72px]">
-              {settings.hero_title}
-            </h1>
-            {settings.hero_subtitle && <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-white/80 sm:text-[16px]">{settings.hero_subtitle}</p>}
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href={settings.hero_cta_href || '/men'}
-                className="inline-flex h-12 min-w-[140px] items-center justify-center border border-white px-8 font-display text-[12px] font-medium uppercase tracking-[0.24em] transition-colors sm:h-14 sm:min-w-[170px] bg-white text-[#0C0D11] hover:bg-white/0 hover:text-white"
-              >
-                {settings.hero_cta_label || 'Shop menswear'}
+      {/* Hero: sits under the transparent header */}
+      {heroPhoto ? (
+        <section className="relative h-[100svh] min-h-[620px] overflow-hidden bg-black">
+          <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-black/55" />
+          <div className="site-x relative flex h-full flex-col items-center justify-end pb-20 text-center text-white lg:pb-24">
+            <p className="nav-label text-[11px] text-white/80">{settings.hero_eyebrow}</p>
+            <h1 className="serif-title mt-4 max-w-4xl text-[46px] sm:text-[64px] lg:text-[84px]">{settings.hero_title}</h1>
+            {settings.hero_subtitle && <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white/85">{settings.hero_subtitle}</p>}
+            <div className="mt-9 flex flex-wrap justify-center gap-8">
+              <Link href={settings.hero_cta_href || '/men'} className="nav-label border-b border-white pb-1.5 text-[12px]">
+                {settings.hero_cta_label || 'Discover the collection'}
               </Link>
-              <Link
-                href="/contact"
-                className="inline-flex h-12 min-w-[140px] items-center justify-center border border-white px-8 font-display text-[12px] font-medium uppercase tracking-[0.24em] transition-colors sm:h-14 sm:min-w-[170px] bg-white/0 text-white hover:bg-white hover:text-[#0C0D11]"
-              >
+              <Link href="/contact" className="nav-label border-b border-white/50 pb-1.5 text-[12px] text-white/85 hover:border-white">
                 Visit the store
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Everything else */}
-      {everything.length > 0 && (
-        <section className="site-x pt-14 lg:pt-20">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-muted">The collection</p>
-              <h2 className="mt-2 font-display text-[20px] font-normal uppercase tracking-[0.08em] lg:text-[24px]">All pieces</h2>
+        </section>
+      ) : (
+        <section className="relative min-h-[100svh] overflow-hidden bg-surface">
+          <div className="site-x flex min-h-[100svh] flex-col items-center pb-12 text-center" style={{ paddingTop: 'calc(var(--hdr) + 3.5rem)' }}>
+            <p className="nav-label text-[11px] text-muted animate-rise">{settings.hero_eyebrow}</p>
+            <h1 className="serif-title mt-4 max-w-4xl text-[46px] animate-rise sm:text-[64px] lg:text-[80px]">{settings.hero_title}</h1>
+            {settings.hero_subtitle && (
+              <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted animate-rise">{settings.hero_subtitle}</p>
+            )}
+            <div className="mt-8 flex flex-wrap justify-center gap-8 animate-rise">
+              <Link href={settings.hero_cta_href || '/men'} className="nav-label border-b border-fg pb-1.5 text-[12px]">
+                {settings.hero_cta_label || 'Discover the collection'}
+              </Link>
+              <Link href="/contact" className="nav-label border-b border-fg/30 pb-1.5 text-[12px] text-fg/75 hover:border-fg">
+                Visit the store
+              </Link>
             </div>
-            <Link href="/shop" className="label link-u text-muted">
-              Shop all {all.length}
-            </Link>
+            <div className="mt-12 grid w-full max-w-5xl flex-1 grid-cols-1 gap-4 sm:grid-cols-3 lg:mt-14 lg:gap-6">
+              {STILL_LIFE.map((s, i) => (
+                <div key={s.title} className={i > 0 ? 'hidden sm:block' : ''}>
+                  <div className="relative h-full min-h-[300px] overflow-hidden bg-surface-2">
+                    <GarmentArt title={s.title} color={s.color} className="bg-surface-2" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 lg:gap-x-6 lg:gap-y-12 xl:grid-cols-4">
-            {everything.slice(0, ALL_LIMIT).map((p) => (
-              <ProductCard key={p.id} product={p} />
+        </section>
+      )}
+
+      {/* Shop by category */}
+      {catTiles.length > 0 && (
+        <section className="site-x pt-20 lg:pt-28">
+          <SectionHead eyebrow="Ready to wear" title="Shop by category" />
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-5 lg:gap-6">
+            {catTiles.map(({ c, photo, alt, sample }) => (
+              <Link key={c.slug} href={`/men?category=${c.slug}`} className="group block">
+                <div className="relative aspect-[3/4] overflow-hidden bg-surface-2">
+                  {photo ? (
+                    <Img src={photo} alt={alt || c.name} sizes="(max-width: 1024px) 50vw, 20vw" className="tile-photo object-cover object-top transition-transform duration-[900ms] group-hover:scale-[1.04]" />
+                  ) : (
+                    <GarmentArt category={c.slug} title={sample?.title} color={sample?.availableColors[0]?.hex} />
+                  )}
+                </div>
+                <p className="mt-4 text-center font-serif text-[22px] leading-tight">{c.name}</p>
+                <p className="nav-label mt-1 text-center text-[10px] text-muted group-hover:text-fg">Discover</p>
+              </Link>
             ))}
           </div>
-          {everything.length > ALL_LIMIT && (
-            <div className="mt-12 flex justify-center">
-              <Link href="/shop" className="btn-outline h-14 px-10">View all {all.length} pieces</Link>
-            </div>
-          )}
         </section>
       )}
 
       {/* New arrivals */}
       {newest.length > 0 && (
-        <section className="site-x pt-14 lg:pt-20">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-muted">Just in</p>
-              <h2 className="mt-2 font-display text-[20px] font-normal uppercase tracking-[0.08em] lg:text-[24px]">New arrivals</h2>
-            </div>
-            <Link href="/shop?sort=newest" className="label link-u text-muted">
-              View all
-            </Link>
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 lg:gap-x-6 lg:gap-y-12 xl:grid-cols-4">
-            {newest.map((p, i) => (
-              <ProductCard key={p.id} product={p} priority={i < 2} />
-            ))}
-          </div>
+        <section className="site-x pt-20 lg:pt-28">
+          <SectionHead eyebrow="Just in" title="New arrivals" href="/shop?sort=newest" linkLabel="View all" />
+          <Grid products={newest} />
         </section>
       )}
 
       {/* Collections */}
       {collections.length > 0 && (
-        <section className="site-x pt-14 lg:pt-20">
-          <div className="grid gap-3 md:grid-cols-2 lg:gap-[42px]">
-            {collections.slice(0, 2).map((c) => (
-              <Link key={c.slug} href={`/collections/${c.slug}`} className="group relative block aspect-[4/5] overflow-hidden border border-line sm:aspect-[16/11]">
+        <section className="site-x pt-20 lg:pt-28">
+          <div className="grid gap-4 md:grid-cols-2 lg:gap-6">
+            {collections.slice(0, 2).map((c, i) => (
+              <Link key={c.slug} href={`/collections/${c.slug}`} className="group relative block aspect-[4/5] overflow-hidden bg-surface-2 sm:aspect-[5/6]">
                 {c.heroImage ? (
-                  <Img src={c.heroImage} alt={c.name} sizes="(max-width: 768px) 100vw, 50vw" className="transition-transform duration-700 group-hover:scale-[1.03]" />
+                  <>
+                    <Img src={c.heroImage} alt={c.name} sizes="(max-width: 768px) 100vw, 50vw" className="transition-transform duration-[900ms] group-hover:scale-[1.03]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                  </>
                 ) : (
-                  <GarmentArt title={c.slug.includes('wedding') ? 'Black Tuxedo Suit' : 'Double-Breasted Suit'} color={c.slug.includes('wedding') ? '#16171A' : '#3A3B3E'} />
+                  <div className="absolute inset-x-0 top-0 bottom-[34%]">
+                    <GarmentArt
+                      title={i === 0 ? 'Black Tuxedo Suit' : 'Double-Breasted Suit'}
+                      color={i === 0 ? '#16171A' : '#3A3B3E'}
+                      className="bg-transparent transition-transform duration-[900ms] group-hover:scale-[1.02]"
+                    />
+                  </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-6 text-white lg:p-10">
-                  <p className="font-display text-xs uppercase tracking-wide2 text-white/70">Collection</p>
-                  <h3 className="mt-3 font-display text-[26px] font-normal uppercase tracking-[0.06em] lg:text-[34px]">{c.name}</h3>
-                  {c.storyQuote && <p className="mt-4 max-w-md text-sm text-white/80">{c.storyQuote}</p>}
-                  <span className="label mt-6 inline-flex items-center gap-2 border-b border-white pb-1">
-                    Explore <ArrowUpRight className="h-4 w-4" />
-                  </span>
+                <div className={`absolute inset-x-0 bottom-0 p-8 text-center lg:p-12 ${c.heroImage ? 'text-white' : 'text-fg'}`}>
+                  <p className="nav-label text-[11px] opacity-75">{c.season || 'Collection'}</p>
+                  <h3 className="serif-title mt-3 text-[34px] lg:text-[44px]">{c.name}</h3>
+                  {c.storyQuote && <p className="mx-auto mt-3 max-w-sm text-[14px] italic opacity-80">{c.storyQuote}</p>}
+                  <span className="nav-label mt-6 inline-block border-b border-current pb-1 text-[11px]">Discover the collection</span>
                 </div>
               </Link>
             ))}
@@ -133,50 +176,74 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Featured */}
+      {/* The essentials */}
       {featuredRest.length > 0 && (
-        <section className="site-x pt-14 lg:pt-20">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-muted">Our picks</p>
-              <h2 className="mt-2 font-display text-[20px] font-normal uppercase tracking-[0.08em] lg:text-[24px]">The essentials</h2>
+        <section className="site-x pt-20 lg:pt-28">
+          <SectionHead eyebrow="Our picks" title="The essentials" />
+          <Grid products={featuredRest} />
+        </section>
+      )}
+
+      {/* The collection */}
+      {everything.length > 0 && (
+        <section className="site-x pt-20 lg:pt-28">
+          <SectionHead eyebrow="The collection" title="All pieces" href="/men" linkLabel={`Shop all ${all.length}`} />
+          <Grid products={everything.slice(0, ALL_LIMIT)} />
+        </section>
+      )}
+
+      {/* The store */}
+      {settings.address && (
+        <section className="site-x pt-20 lg:pt-28">
+          <div className="grid overflow-hidden border border-line lg:grid-cols-2">
+            <div className="flex flex-col justify-center bg-surface p-10 text-center lg:p-16">
+              <p className="nav-label text-[11px] text-muted">The store</p>
+              <h2 className="serif-title mt-3 text-[34px] lg:text-[44px]">Visit us in San Jose</h2>
+              <p className="mx-auto mt-5 max-w-sm text-[15px] leading-relaxed text-fg/80">{settings.address}</p>
+              {settings.opening_hours && <p className="mt-2 text-[14px] text-muted">{settings.opening_hours}</p>}
+              <p className="mx-auto mt-4 max-w-sm text-[14px] leading-relaxed text-muted">
+                See the fabrics, try on the fit and put together the complete look in store at Eastridge Center.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-8">
+                {maps && (
+                  <a href={maps} target="_blank" rel="noreferrer" className="nav-label border-b border-fg pb-1.5 text-[11px]">Get directions</a>
+                )}
+                <Link href="/contact" className="nav-label border-b border-fg/30 pb-1.5 text-[11px] hover:border-fg">Contact us</Link>
+              </div>
             </div>
-            <Link href="/shop" className="label link-u text-muted">
-              Full catalogue
-            </Link>
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 lg:gap-x-6 lg:gap-y-12 xl:grid-cols-4">
-            {featuredRest.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+            {embed && (
+              <div className="relative min-h-[320px] bg-surface-2">
+                <iframe
+                  src={embed}
+                  title={`Map of ${settings.store_name}`}
+                  className="absolute inset-0 h-full w-full grayscale-[60%] contrast-[0.95]"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            )}
           </div>
         </section>
       )}
 
-      {/* Service strip */}
-      <section className="site-x pt-14 lg:pt-20">
-        <div className="grid border border-line sm:grid-cols-3">
+      {/* Services */}
+      <section className="site-x pt-20 lg:pt-28">
+        <div className="grid gap-10 text-center sm:grid-cols-3">
           {[
             {
               icon: Truck,
-              title: 'Fast US shipping',
+              title: 'Shipping across the US',
               text: settings.free_shipping_threshold
-                ? `Tracked delivery anywhere in the US. Free on orders over ${formatCents(settings.free_shipping_threshold)}.`
-                : 'Tracked delivery anywhere in the US.',
+                ? `Tracked delivery, free on orders over ${formatCents(settings.free_shipping_threshold)}.`
+                : 'Tracked delivery to your door.',
             },
-            { icon: RotateCcw, title: 'Easy returns', text: 'Wrong size? Return or exchange unworn items within 30 days.' },
-            {
-              icon: MapPin,
-              title: 'Visit us in San Jose',
-              text: 'Try it on at Eastridge Center: 2200 Eastridge Loop Ste 2066, San Jose, CA 95122.',
-            },
+            { icon: RotateCcw, title: 'Returns & exchanges', text: 'Unworn pieces can be returned or exchanged within 30 days.' },
+            { icon: MapPin, title: 'In store', text: 'Try it on at Eastridge Center, San Jose.' },
           ].map(({ icon: Icon, title, text }) => (
-            <div key={title} className="flex gap-5 border-line p-8 [&:not(:last-child)]:border-b sm:[&:not(:last-child)]:border-b-0 sm:[&:not(:last-child)]:border-r lg:p-10">
-              <Icon className="h-6 w-6 shrink-0" strokeWidth={1.4} />
-              <div>
-                <h3 className="label">{title}</h3>
-                <p className="mt-3 text-sm text-muted">{text}</p>
-              </div>
+            <div key={title} className="flex flex-col items-center">
+              <Icon className="h-5 w-5 text-fg/70" strokeWidth={1.2} />
+              <h3 className="mt-4 font-serif text-[22px]">{title}</h3>
+              <p className="mt-2 max-w-xs text-[14px] text-muted">{text}</p>
             </div>
           ))}
         </div>

@@ -12,7 +12,7 @@ export function InfoPage({
   return (
     <div className="site-x pt-10 lg:pt-14">
       <p className="eyebrow">{eyebrow}</p>
-      <h1 className="display mt-4 text-[40px] lg:text-[60px]">{title}</h1>
+      <h1 className="serif-title mt-4 text-[44px] lg:text-[64px]">{title}</h1>
       {intro && <div className="mt-6 max-w-2xl text-[17px] leading-relaxed text-fg/85">{intro}</div>}
       <div className="mt-12 border-t border-line">
         {sections.map((s, i) => (

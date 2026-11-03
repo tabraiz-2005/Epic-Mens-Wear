@@ -129,10 +129,7 @@ export function ProductView({
           {images.length ? (
             images.map((img, i) => (
               <div key={img.url + i} className="relative aspect-[4/5] max-h-[72svh] w-full shrink-0 snap-center bg-surface-2 md:max-h-none">
-                <div className="absolute inset-0">
-                  <GarmentArt category={product.category} title={product.title} color={colorHex} />
-                </div>
-                <Img src={img.url} alt={img.alt || product.title} sizes="(max-width:768px) 100vw, 620px" priority={i === 0} className="object-cover object-top" />
+                <Img src={img.url} alt={img.alt || product.title} sizes="(max-width:768px) 100vw, 620px" priority={i === 0} className="tile-photo object-cover object-top" />
               </div>
             ))
           ) : (
@@ -151,7 +148,7 @@ export function ProductView({
       </div>
 
       {/* Buy panel */}
-      <div className="md:sticky md:top-28 md:self-start">
+      <div className="md:sticky md:top-28 md:self-start lg:top-[136px]">
         <nav className="flex flex-wrap items-center gap-2 text-[12px] text-muted" aria-label="Breadcrumb">
           {dept && (
             <>
@@ -163,7 +160,7 @@ export function ProductView({
         </nav>
 
         <div className="mt-4 flex items-start justify-between gap-3">
-          <h1 className="font-display text-[clamp(19px,1.6vw,23px)] font-normal leading-snug tracking-[0.01em]">{product.title}</h1>
+          <h1 className="font-serif text-[clamp(28px,2.4vw,36px)] font-normal leading-[1.1]">{product.title}</h1>
           <div className="flex shrink-0 items-center gap-1">
             <button type="button" onClick={share} aria-label="Share" className="flex h-9 w-9 items-center justify-center text-fg/80 hover:text-fg">
               <Share2 className="h-[18px] w-[18px]" strokeWidth={1.4} />

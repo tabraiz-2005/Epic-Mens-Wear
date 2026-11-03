@@ -65,16 +65,22 @@ export async function Catalogue({
   const filtered = Boolean(category) || sort !== 'featured';
   const extra = { collection: params.collection, q: params.q, sale: params.sale };
 
+  const linkCls = (active: boolean) =>
+    cn(
+      'nav-label relative shrink-0 py-2 text-[11px] transition-opacity after:absolute after:inset-x-0 after:bottom-0.5 after:h-px after:bg-current after:transition-transform after:duration-300',
+      active ? 'after:scale-x-100' : 'opacity-60 after:scale-x-0 hover:opacity-100 hover:after:scale-x-100'
+    );
+
   return (
     <div className="site-x">
       {/* Breadcrumb + title */}
-      <section className="border-b border-line pb-6 pt-6 lg:pb-8 lg:pt-10">
-        <nav className="flex flex-wrap items-center gap-2 text-[12px] text-muted" aria-label="Breadcrumb">
+      <section className="pb-8 pt-10 text-center lg:pb-10 lg:pt-14">
+        <nav className="flex flex-wrap items-center justify-center gap-2 text-[11px] uppercase tracking-[0.16em] text-muted" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-fg">Home</Link>
           {gender !== 'all' && (
             <>
               <span>/</span>
-              <Link href={basePath(gender)} className="capitalize hover:text-fg">{gender}</Link>
+              <Link href={basePath(gender)} className="hover:text-fg">{gender === 'men' ? 'Men' : gender}</Link>
             </>
           )}
           {category && (
@@ -84,101 +90,54 @@ export async function Catalogue({
             </>
           )}
         </nav>
-        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="font-display text-[26px] font-normal uppercase tracking-[0.06em] sm:text-[32px] lg:text-[38px]">{heading}</h1>
-          <p className="text-[13px] text-muted">
-            {products.length} {products.length === 1 ? 'piece' : 'pieces'}
-          </p>
-        </div>
+        <h1 className="serif-title mt-5 text-[40px] sm:text-[52px] lg:text-[60px]">{heading}</h1>
         {(description || category?.description) && (
-          <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-muted sm:text-[14px]">{description || category?.description}</p>
+          <p className="mx-auto mt-4 max-w-xl text-[14px] leading-relaxed text-muted sm:text-[15px]">{description || category?.description}</p>
         )}
       </section>
 
-      <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
-        {/* Sidebar (desktop) */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-28 pt-8">
-            <p className="label text-fg">Category</p>
-            <div className="mt-3">
-              <Link
-                href={href(gender, undefined, sort, extra)}
-                scroll={false}
-                className={cn('flex items-center justify-between py-2.5 text-[14px] hover:text-fg', !category ? 'font-medium text-fg' : 'text-muted')}
-              >
-                All pieces <span className="text-[12px] text-subtle">{inGender.length}</span>
-              </Link>
-              {categories.map((c) => (
-                <Link
-                  key={c.slug}
-                  href={href(gender, c.slug, sort, extra)}
-                  scroll={false}
-                  className={cn(
-                    'flex items-center justify-between py-2.5 text-[14px] hover:text-fg',
-                    category?.slug === c.slug ? 'font-medium text-fg' : 'text-muted'
-                  )}
-                >
-                  {c.name} <span className="text-[12px] text-subtle">{countFor(c.slug)}</span>
-                </Link>
-              ))}
-            </div>
-            {filtered && (
-              <Link href="/shop" className="mt-6 inline-flex items-center gap-2 text-[13px] text-muted hover:text-fg">
-                <X className="h-3.5 w-3.5" /> <span className="underline underline-offset-4">Clear filters</span>
-              </Link>
-            )}
-          </div>
-        </aside>
-
-        <div>
-          {/* Mobile filters */}
-          <div className="sticky top-[116px] z-20 -mx-4 border-b border-line bg-bg/95 px-4 backdrop-blur sm:-mx-8 sm:px-8 lg:hidden">
-            <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
-              <Link
-                href={href(gender, undefined, sort, extra)}
-                scroll={false}
-                className={cn('shrink-0 rounded-full border px-4 py-1.5 text-[13px]', !category ? 'border-fg bg-fg text-bg' : 'border-line text-fg/80')}
-              >
-                All pieces
-              </Link>
-              {categories.map((c) => (
-                <Link
-                  key={c.slug}
-                  href={href(gender, c.slug, sort, extra)}
-                  scroll={false}
-                  className={cn(
-                    'shrink-0 rounded-full border px-4 py-1.5 text-[13px]',
-                    category?.slug === c.slug ? 'border-fg bg-fg text-bg' : 'border-line text-fg/80'
-                  )}
-                >
-                  {c.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Sort row */}
-          <div className="flex items-center justify-end border-b border-line py-3 lg:py-4">
-            <Suspense>
-              <SortSelect />
-            </Suspense>
-          </div>
-
-          {products.length === 0 ? (
-            <div className="flex flex-col items-center gap-4 py-24 text-center">
-              <p className="font-display text-[20px] text-muted">No pieces found</p>
-              <p className="text-[13px] text-muted">Try another category.</p>
-              <Link href="/shop" className="btn-outline h-12">View all pieces</Link>
-            </div>
-          ) : (
-            <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 lg:mt-8 lg:gap-x-6 lg:gap-y-12 2xl:grid-cols-4">
-              {products.map((p, i) => (
-                <ProductCard key={p.id} product={p} priority={i < 4} />
-              ))}
-            </div>
-          )}
+      {/* Category links (scroll sideways on phones, stays visible under the header) */}
+      <div className="sticky top-[72px] z-20 -mx-4 border-y border-line bg-bg/95 px-4 backdrop-blur sm:-mx-8 sm:px-8 lg:static lg:mx-0 lg:border-x-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none">
+        <div className="flex gap-7 overflow-x-auto py-3 no-scrollbar lg:justify-center lg:gap-10 lg:py-4">
+          <Link href={href(gender, undefined, sort, extra)} scroll={false} className={linkCls(!category)}>
+            All pieces <span className="ml-1 opacity-60">{inGender.length}</span>
+          </Link>
+          {categories.map((c) => (
+            <Link key={c.slug} href={href(gender, c.slug, sort, extra)} scroll={false} className={linkCls(category?.slug === c.slug)}>
+              {c.name} <span className="ml-1 opacity-60">{countFor(c.slug)}</span>
+            </Link>
+          ))}
         </div>
       </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between py-5">
+        <p className="text-[12px] uppercase tracking-[0.14em] text-muted">
+          {products.length} {products.length === 1 ? 'piece' : 'pieces'}
+          {filtered && (
+            <Link href={basePath(gender)} className="ml-4 inline-flex items-center gap-1 normal-case tracking-normal text-muted hover:text-fg">
+              <X className="h-3 w-3" /> <span className="underline underline-offset-4">Clear</span>
+            </Link>
+          )}
+        </p>
+        <Suspense>
+          <SortSelect />
+        </Suspense>
+      </div>
+
+      {products.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 py-24 text-center">
+          <p className="font-serif text-[28px]">No pieces found</p>
+          <p className="text-[14px] text-muted">Try another category.</p>
+          <Link href="/men" className="nav-label mt-2 border-b border-fg pb-1 text-[11px]">View all pieces</Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 md:grid-cols-3 lg:gap-x-6 lg:gap-y-14 xl:grid-cols-4">
+          {products.map((p, i) => (
+            <ProductCard key={p.id} product={p} priority={i < 4} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

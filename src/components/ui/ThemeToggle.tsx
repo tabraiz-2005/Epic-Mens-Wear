@@ -4,13 +4,13 @@ import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-export const THEME_KEY = 'epic_theme';
+export const THEME_KEY = 'epic_theme_v2';
 
 /** Inline script for <head>: applies the saved theme before first paint. */
-export const themeScript = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
+export const themeScript = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
-export function ThemeToggle({ className }: { className?: string }) {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+export function ThemeToggle({ className, variant = 'icon' }: { className?: string; variant?: 'icon' | 'text' }) {
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
 
   useEffect(() => {
     const t = document.documentElement.getAttribute('data-theme');
@@ -27,6 +27,15 @@ export function ThemeToggle({ className }: { className?: string }) {
       /* ignore */
     }
   };
+
+  if (variant === 'text') {
+    return (
+      <button type="button" onClick={toggle} className={cn('inline-flex items-center gap-2 hover:text-fg', className)}>
+        {theme === 'dark' ? <Sun className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />}
+        {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+      </button>
+    );
+  }
 
   return (
     <button

@@ -19,7 +19,7 @@ export function SortSelect() {
   return (
     <label className="flex items-center gap-2.5">
       <SlidersHorizontal className="h-4 w-4 text-muted" strokeWidth={1.5} />
-      <span className="text-[13px] text-muted">Sort</span>
+      <span className="text-[12px] uppercase tracking-[0.14em] text-muted">Sort by</span>
       <span className="relative">
         <select
           value={current}
@@ -30,7 +30,7 @@ export function SortSelect() {
             const qs = next.toString();
             router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
           }}
-          className="h-9 appearance-none border border-line bg-transparent pl-3 pr-9 text-[13px] text-fg focus:border-fg focus:outline-none"
+          className="h-9 appearance-none border-0 border-b border-line bg-transparent pl-1 pr-8 text-[13px] text-fg focus:border-fg focus:outline-none"
           aria-label="Sort products"
         >
           {OPTIONS.map((o) => (

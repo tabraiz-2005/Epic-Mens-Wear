@@ -151,7 +151,7 @@ export function CheckoutForm({ shipping }: { shipping: { standard: number; expre
     return (
       <div className="site-x flex flex-col items-center gap-6 py-32 text-center">
         <p className="eyebrow">Checkout</p>
-        <h1 className="display text-5xl">Your bag is empty</h1>
+        <h1 className="serif-title text-5xl">Your bag is empty</h1>
         <Link href="/shop" className="btn-primary">
           Browse the catalogue
         </Link>
@@ -162,7 +162,7 @@ export function CheckoutForm({ shipping }: { shipping: { standard: number; expre
   return (
     <div className="site-x pb-10 pt-10 lg:pt-14">
       <p className="eyebrow">Secure checkout · Card payment by Stripe</p>
-      <h1 className="display mt-4 text-[40px] lg:text-[60px]">Checkout</h1>
+      <h1 className="serif-title mt-4 text-[44px] lg:text-[64px]">Checkout</h1>
 
       {error && (
         <div className="mt-8 flex items-start gap-3 border border-danger/50 bg-danger/10 p-4 text-sm">
@@ -308,7 +308,7 @@ export function CheckoutForm({ shipping }: { shipping: { standard: number; expre
           </fieldset>
         </div>
 
-        <aside className="h-fit border border-line bg-surface p-6 lg:sticky lg:top-32 lg:p-8">
+        <aside className="h-fit border border-line bg-surface p-6 lg:sticky lg:top-[136px] lg:p-8">
           <h2 className="label">Order summary</h2>
           <div className="mt-4 max-h-[340px] divide-y divide-line overflow-y-auto">
             {items.map((i) => (

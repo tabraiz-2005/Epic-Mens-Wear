@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Heart, Home, Menu, Search, ShoppingBag, X } from 'lucide-react';
+import { ArrowRight, Heart, Menu, Search, ShoppingBag, X } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -10,121 +10,175 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { SearchOverlay } from './SearchOverlay';
 import { Logo } from './Logo';
+import { GarmentArt } from './GarmentArt';
 
 export interface NavCategory {
   slug: string;
   name: string;
   gender?: 'all' | 'men' | 'women';
 }
+export interface NavCollection {
+  slug: string;
+  name: string;
+}
 
-// Epic Menswear is men only. Add another department here (and a page under app/(store)/) to bring one back.
-type Dept = 'men';
-const DEPTS: { key: Dept; label: string }[] = [{ key: 'men', label: 'Men' }];
+interface HeaderProps {
+  storeName: string;
+  categories: NavCategory[];
+  collections?: NavCollection[];
+  announcement?: string | null;
+  /** The homepage hero has a photo: header text turns white while it sits over it. */
+  heroDark?: boolean;
+}
 
-const forDept = (cats: NavCategory[], d: Dept) => cats.filter((c) => !c.gender || c.gender === 'all' || c.gender === d);
+const SERVICE_LINKS = [
+  { href: '/size-guide', label: 'Size guide' },
+  { href: '/shipping', label: 'Shipping' },
+  { href: '/returns', label: 'Returns & exchanges' },
+  { href: '/contact', label: 'Contact us' },
+];
+
+/** Example piece drawn in the mega-menu for each category (the drawing follows the category name). */
+const sampleTitle = (c?: NavCategory) => {
+  const n = `${c?.slug ?? ''} ${c?.name ?? ''}`.toLowerCase();
+  if (n.includes('casual') && n.includes('shoe')) return 'Leather Sneakers';
+  if (n.includes('shoe')) return 'Leather Oxford Shoes';
+  if (n.includes('shirt')) return 'Dress Shirt';
+  if (n.includes('access')) return 'Silk Tie';
+  return 'Classic Two-Piece Suit';
+};
+const sampleColor = (c?: NavCategory) => {
+  const n = `${c?.slug ?? ''}`;
+  if (n.includes('shirt')) return '#F2F2EF';
+  if (n.includes('casual')) return '#A8835A';
+  if (n.includes('shoe')) return '#3E2A1E';
+  if (n.includes('access')) return '#5B1F28';
+  return '#1E2A3F';
+};
 
 function Count({ n }: { n: number }) {
   if (!n) return null;
   return (
-    <span className="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-fg px-1 font-display text-[10px] font-bold text-bg">
+    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-fg px-1 font-display text-[9px] font-semibold text-bg">
       {n}
     </span>
   );
 }
 
-/** Desktop: Home / Men (with a category panel on hover) / Sale. */
-function DeptMenu({ categories }: { categories: NavCategory[] }) {
+/** Underline that grows from the centre on hover, as on luxury fashion sites. */
+const navLink = (active: boolean) =>
+  cn(
+    'nav-label relative py-3 transition-opacity after:absolute after:inset-x-0 after:bottom-1.5 after:h-px after:origin-center after:bg-current after:transition-transform after:duration-300',
+    active ? 'after:scale-x-100' : 'opacity-80 after:scale-x-0 hover:opacity-100 hover:after:scale-x-100'
+  );
+
+function DesktopNav({
+  categories,
+  collections,
+  onOpenChange,
+}: {
+  categories: NavCategory[];
+  collections: NavCollection[];
+  onOpenChange: (open: boolean) => void;
+}) {
   const pathname = usePathname();
   const params = useSearchParams();
-  const [open, setOpen] = useState<Dept | null>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState<NavCategory | undefined>(categories[0]);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentCat = params.get('category');
 
-  const show = (d: Dept) => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setOpen(d);
+  const show = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setOpen(true);
   };
   const hide = () => {
-    closeTimer.current = setTimeout(() => setOpen(null), 120);
+    timer.current = setTimeout(() => setOpen(false), 140);
   };
-
-  useEffect(() => setOpen(null), [pathname, params]);
+  useEffect(() => setOpen(false), [pathname, params]);
+  useEffect(() => onOpenChange(open), [open, onOpenChange]);
 
   return (
-    <div className="flex items-center gap-9" onMouseLeave={hide}>
-      <Link
-        href="/"
-        onMouseEnter={() => setOpen(null)}
-        className={cn(
-          'whitespace-nowrap py-9 font-display text-[13px] font-medium uppercase tracking-label transition-colors hover:text-fg',
-          pathname === '/' ? 'text-fg' : 'text-fg/75'
-        )}
-      >
-        Home
-      </Link>
-      {DEPTS.map((d) => (
-        <div key={d.key} className="flex items-center" onMouseEnter={() => show(d.key)}>
-          <Link
-            href={`/${d.key}`}
-            onFocus={() => show(d.key)}
-            className={cn(
-              'whitespace-nowrap py-9 font-display text-[13px] font-medium uppercase tracking-label transition-colors hover:text-fg',
-              pathname.startsWith(`/${d.key}`) || open === d.key ? 'text-fg' : 'text-fg/75'
-            )}
-          >
-            {d.label}
+    <div onMouseLeave={hide}>
+      <nav aria-label="Main" className="flex h-11 items-center justify-center gap-7 xl:gap-10">
+        <Link href="/shop?sort=newest" onMouseEnter={() => setOpen(false)} className={navLink(params.get('sort') === 'newest')}>
+          New arrivals
+        </Link>
+        <span className="flex items-center" onMouseEnter={show}>
+          <Link href="/men" onFocus={show} className={navLink(open || (pathname === '/men' && !currentCat))}>
+            Men
           </Link>
-        </div>
-      ))}
-      <Link
-        href="/shop?sort=newest"
-        onMouseEnter={() => setOpen(null)}
-        className="whitespace-nowrap py-9 font-display text-[13px] font-medium uppercase tracking-label text-fg/75 transition-colors hover:text-fg"
-      >
-        New in
-      </Link>
-      <Link
-        href="/sale"
-        onMouseEnter={() => setOpen(null)}
-        className={cn(
-          'whitespace-nowrap border px-3.5 py-2 font-display text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors',
-          pathname.startsWith('/sale')
-            ? 'border-brand bg-brand text-brand-ink'
-            : 'border-brand text-brand hover:bg-brand hover:text-brand-ink'
-        )}
-      >
-        Sale
-      </Link>
+        </span>
+        {categories.slice(0, 6).map((c) => (
+          <Link
+            key={c.slug}
+            href={`/men?category=${c.slug}`}
+            onMouseEnter={() => setOpen(false)}
+            className={navLink(currentCat === c.slug)}
+          >
+            {c.name}
+          </Link>
+        ))}
+        <Link href="/sale" onMouseEnter={() => setOpen(false)} className={cn(navLink(pathname.startsWith('/sale')), 'text-brand')}>
+          Sale
+        </Link>
+        <Link href="/about" onMouseEnter={() => setOpen(false)} className={navLink(pathname.startsWith('/about'))}>
+          Our world
+        </Link>
+      </nav>
 
       {open && (
-        <div
-          onMouseEnter={() => show(open)}
-          className="absolute inset-x-0 top-full border-b border-line bg-bg shadow-2xl animate-fade-in"
-        >
-          <div className="site-x grid grid-cols-[200px_1fr] gap-12 py-10">
+        <div onMouseEnter={show} className="absolute inset-x-0 top-full border-y border-line bg-bg text-fg shadow-[0_24px_40px_-24px_rgba(0,0,0,0.25)] animate-fade-in">
+          <div className="site-x grid grid-cols-[1fr_1fr_1fr_minmax(220px,260px)] gap-12 py-10">
             <div>
-              <p className="font-display text-[12px] uppercase tracking-[0.2em] text-muted">{DEPTS.find((d) => d.key === open)?.label}</p>
-              <Link href={`/${open}`} className="mt-4 block font-display text-[15px] uppercase tracking-[0.12em] text-fg hover:underline">
-                View all
-              </Link>
-            </div>
-            <div>
-              <p className="font-display text-[12px] uppercase tracking-[0.2em] text-muted">Shop by category</p>
-              <ul className="mt-4 grid grid-flow-col grid-rows-5 auto-cols-[220px] gap-x-10 gap-y-3">
-                {forDept(categories, open).map((c) => (
+              <p className="nav-label text-[11px] font-semibold">Ready to wear</p>
+              <ul className="mt-5 space-y-3">
+                {categories.map((c) => (
                   <li key={c.slug}>
                     <Link
-                      href={`/${open}?category=${c.slug}`}
-                      className={cn(
-                        'font-display text-[14px] uppercase tracking-[0.08em] transition-colors hover:text-fg',
-                        pathname === `/${open}` && params.get('category') === c.slug ? 'text-fg' : 'text-fg/70'
-                      )}
+                      href={`/men?category=${c.slug}`}
+                      onMouseEnter={() => setHover(c)}
+                      className="font-serif text-[22px] leading-tight text-fg/80 transition-colors hover:text-fg"
                     >
                       {c.name}
                     </Link>
                   </li>
                 ))}
+                <li className="pt-2">
+                  <Link href="/men" className="nav-label inline-flex items-center gap-2 text-[11px] underline underline-offset-[6px]">
+                    All menswear <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Link>
+                </li>
               </ul>
             </div>
+            <div>
+              <p className="nav-label text-[11px] font-semibold">Collections</p>
+              <ul className="mt-5 space-y-3 text-[15px]">
+                <li><Link href="/shop?sort=newest" className="text-fg/75 hover:text-fg">New arrivals</Link></li>
+                {collections.map((c) => (
+                  <li key={c.slug}>
+                    <Link href={`/collections/${c.slug}`} className="text-fg/75 hover:text-fg">{c.name}</Link>
+                  </li>
+                ))}
+                <li><Link href="/sale" className="text-brand hover:opacity-80">Sale</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="nav-label text-[11px] font-semibold">Client service</p>
+              <ul className="mt-5 space-y-3 text-[15px]">
+                {SERVICE_LINKS.map((l) => (
+                  <li key={l.href}><Link href={l.href} className="text-fg/75 hover:text-fg">{l.label}</Link></li>
+                ))}
+              </ul>
+            </div>
+            <Link href={hover ? `/men?category=${hover.slug}` : '/men'} className="group block">
+              <div className="relative aspect-[4/5] overflow-hidden">
+                <GarmentArt key={hover?.slug} category={hover?.slug} title={sampleTitle(hover)} color={sampleColor(hover)} className="animate-fade-in" />
+              </div>
+              <p className="nav-label mt-4 text-[11px] text-muted">How we style</p>
+              <p className="mt-1 font-serif text-[22px]">{hover?.name ?? 'The collection'}</p>
+              <span className="nav-label mt-2 inline-block text-[11px] underline underline-offset-[6px] group-hover:opacity-70">Discover more</span>
+            </Link>
           </div>
         </div>
       )}
@@ -132,109 +186,115 @@ function DeptMenu({ categories }: { categories: NavCategory[] }) {
   );
 }
 
-/** Mobile drawer: department tabs (only when there is more than one), then the category list. */
 function MobileMenu({
   storeName,
   categories,
+  collections,
   wishCount,
+  onSearch,
   onClose,
 }: {
   storeName: string;
   categories: NavCategory[];
+  collections: NavCollection[];
   wishCount: number;
+  onSearch: () => void;
   onClose: () => void;
 }) {
-  const pathname = usePathname();
-  const [dept, setDept] = useState<Dept>(DEPTS.find((d) => pathname.startsWith(`/${d.key}`))?.key ?? DEPTS[0].key);
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg animate-fade-in lg:hidden">
-      <div className="site-x flex h-[72px] shrink-0 items-center justify-between border-b border-line">
-        <button className="-ml-2 p-2" aria-label="Close menu" onClick={onClose}>
-          <X className="h-6 w-6" strokeWidth={1.5} />
-        </button>
-        <Logo title={storeName} className="w-[118px]" />
-        <span className="w-10" />
-      </div>
-
-      {DEPTS.length > 1 && (
-      <div className="site-x flex shrink-0 gap-8 border-b border-line">
-        {DEPTS.map((d) => (
-          <button
-            key={d.key}
-            type="button"
-            onClick={() => setDept(d.key)}
-            className={cn(
-              '-mb-px border-b-2 py-4 font-display text-[15px] uppercase tracking-[0.12em]',
-              dept === d.key ? 'border-fg text-fg' : 'border-transparent text-muted'
-            )}
-          >
-            {d.label}
+    <div className="fixed inset-0 z-50 lg:hidden">
+      <button aria-label="Close menu" onClick={onClose} className="absolute inset-0 bg-black/30 animate-fade-in" />
+      <div className="relative flex h-full w-full max-w-[440px] flex-col bg-bg shadow-2xl animate-[slideInLeft_.35s_cubic-bezier(.2,.8,.2,1)_both]">
+        <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-line px-5">
+          <button className="-ml-1 flex items-center gap-2 p-1" aria-label="Close menu" onClick={onClose}>
+            <X className="h-5 w-5" strokeWidth={1.4} />
+            <span className="nav-label text-[11px]">Close</span>
           </button>
-        ))}
-      </div>
-      )}
+          <Logo title={storeName} className="w-[96px]" />
+          <span className="w-16" />
+        </div>
 
-      <nav className="site-x flex-1 overflow-y-auto pb-10 pt-6">
-        <Link
-          href="/sale"
-          onClick={onClose}
-          className="mb-6 flex items-center justify-between border border-brand/40 px-4 py-3 font-display text-[15px] uppercase tracking-[0.12em] text-brand"
-        >
-          Sale <span className="text-[12px] normal-case tracking-normal text-muted">Marked-down pieces</span>
-        </Link>
-        <p className="font-display text-[12px] font-semibold uppercase tracking-[0.18em] text-fg">Shop by categories</p>
-        <ul className="mt-4 space-y-1">
-          <li>
-            <Link href={`/${dept}`} onClick={onClose} className="block py-2 font-display text-[16px] uppercase tracking-[0.06em] text-fg">
-              View all
-            </Link>
-          </li>
-          {forDept(categories, dept).map((c) => (
-            <li key={c.slug}>
-              <Link
-                href={`/${dept}?category=${c.slug}`}
-                onClick={onClose}
-                className="block py-2 font-display text-[16px] uppercase tracking-[0.06em] text-fg/85"
-              >
-                {c.name}
-              </Link>
+        <nav className="flex-1 overflow-y-auto px-6 pb-10 pt-6">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onSearch();
+            }}
+            className="flex w-full items-center gap-3 border-b border-line-strong pb-3 text-left text-[14px] text-muted"
+          >
+            <Search className="h-4 w-4" strokeWidth={1.4} /> Search suits, shirts, shoes…
+          </button>
+
+          <ul className="mt-8 space-y-4">
+            <li>
+              <Link href="/shop?sort=newest" onClick={onClose} className="font-serif text-[28px] leading-none">New arrivals</Link>
             </li>
-          ))}
-        </ul>
+            {categories.map((c) => (
+              <li key={c.slug}>
+                <Link href={`/men?category=${c.slug}`} onClick={onClose} className="font-serif text-[28px] leading-none">
+                  {c.name}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link href="/men" onClick={onClose} className="font-serif text-[28px] leading-none">All menswear</Link>
+            </li>
+            <li>
+              <Link href="/sale" onClick={onClose} className="font-serif text-[28px] leading-none text-brand">Sale</Link>
+            </li>
+          </ul>
 
-        <div className="mt-8 space-y-1 border-t border-line pt-6">
-          {[
-            { href: '/', label: 'Home' },
-            { href: '/about', label: 'About' },
-            { href: '/contact', label: 'Contact' },
-            { href: '/wishlist', label: `Wishlist${wishCount ? ` (${wishCount})` : ''}` },
-          ].map((l) => (
-            <Link key={l.href} href={l.href} onClick={onClose} className="block py-2 text-[14px] text-muted">
-              {l.label}
-            </Link>
-          ))}
-        </div>
-        <div className="mt-6 flex items-center justify-between">
-          <span className="text-[13px] text-muted">Appearance</span>
-          <ThemeToggle />
-        </div>
-      </nav>
+          {collections.length > 0 && (
+            <>
+              <p className="nav-label mt-10 text-[11px] font-semibold">Collections</p>
+              <ul className="mt-4 space-y-3 text-[15px] text-fg/80">
+                {collections.map((c) => (
+                  <li key={c.slug}><Link href={`/collections/${c.slug}`} onClick={onClose}>{c.name}</Link></li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          <p className="nav-label mt-10 text-[11px] font-semibold">Client service</p>
+          <ul className="mt-4 space-y-3 text-[15px] text-fg/80">
+            <li><Link href="/about" onClick={onClose}>Our world</Link></li>
+            {SERVICE_LINKS.map((l) => (
+              <li key={l.href}><Link href={l.href} onClick={onClose}>{l.label}</Link></li>
+            ))}
+            <li><Link href="/wishlist" onClick={onClose}>Wishlist{wishCount ? ` (${wishCount})` : ''}</Link></li>
+          </ul>
+
+          <div className="mt-10 border-t border-line pt-6 text-[13px] text-muted">
+            <ThemeToggle variant="text" />
+          </div>
+        </nav>
+      </div>
     </div>
   );
 }
 
-export function Header({ storeName, categories }: { storeName: string; categories: NavCategory[] }) {
+export function Header({ storeName, categories, collections = [], announcement, heroDark }: HeaderProps) {
   const { itemCount, setIsCartOpen, hydrated } = useCart();
   const { count } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [megaOpen, setMegaOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const isHome = pathname === '/';
 
   useEffect(() => {
     setMenuOpen(false);
     setSearchOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
@@ -243,94 +303,96 @@ export function Header({ storeName, categories }: { storeName: string; categorie
     };
   }, [menuOpen]);
 
+  // Over the homepage hero the header is see-through until you scroll or open the menu.
+  const overlay = isHome && !scrolled && !megaOpen;
+  const light = overlay && heroDark;
+
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur">
-        <div className="site-x grid h-[72px] grid-cols-[1fr_auto_1fr] items-center lg:h-[100px]">
-          <nav className="flex items-center" aria-label="Main">
-            <button className="-ml-2 p-2 lg:hidden" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
-              <Menu className="h-6 w-6" strokeWidth={1.5} />
-            </button>
-            <Link href="/" className="p-2 lg:hidden" aria-label="Home">
-              <Home className="h-[22px] w-[22px]" strokeWidth={1.6} />
-            </Link>
-            <div className="hidden lg:block">
-              <Suspense fallback={null}>
-                <DeptMenu categories={categories} />
-              </Suspense>
+      <header
+        className={cn(
+          'fixed inset-x-0 top-0 z-40 transition-[background-color,border-color,color] duration-300',
+          overlay ? 'border-b border-transparent bg-transparent' : 'border-b border-line bg-bg/95 backdrop-blur-md',
+          light ? 'text-white' : 'text-fg'
+        )}
+      >
+        {/* Utility bar */}
+        <div
+          className={cn(
+            'overflow-hidden transition-[height,opacity] duration-300',
+            scrolled ? 'h-0 opacity-0' : 'h-8 opacity-100',
+            !overlay && 'border-b border-line'
+          )}
+        >
+          <div className="site-x grid h-8 grid-cols-1 items-center text-[11px] tracking-[0.06em] lg:grid-cols-[1fr_auto_1fr]">
+            <span className="hidden opacity-70 lg:block">Ship to: United States · USD $</span>
+            <p className="truncate text-center opacity-80">{announcement}</p>
+            <div className="hidden justify-end gap-6 opacity-70 lg:flex">
+              <Link href="/contact" className="hover:opacity-100">Contact us</Link>
+              <Link href="/contact" className="hover:opacity-100">The store</Link>
+              <a href="#newsletter" className="hover:opacity-100">Newsletter</a>
             </div>
-          </nav>
+          </div>
+        </div>
 
-          <Link href="/" className="block text-fg" aria-label={`${storeName} home`}>
-            <Logo title={storeName} className="w-[118px] sm:w-[140px] lg:w-[160px] min-[1440px]:w-[188px]" />
+        {/* Main row */}
+        <div className="site-x grid h-[72px] grid-cols-[1fr_auto_1fr] items-center lg:h-[76px]">
+          <div className="flex items-center gap-1 lg:gap-6">
+            <button className="-ml-2 flex items-center gap-2 p-2 lg:hidden" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
+              <Menu className="h-[22px] w-[22px]" strokeWidth={1.3} />
+            </button>
+            <button className="flex items-center gap-2.5 p-2 lg:-ml-2" aria-label="Search" onClick={() => setSearchOpen(true)}>
+              <Search className="h-[19px] w-[19px]" strokeWidth={1.3} />
+              <span className="nav-label hidden text-[11px] lg:inline">Search</span>
+            </button>
+          </div>
+
+          <Link href="/" className="block" aria-label={`${storeName} home`}>
+            <Logo
+              title={storeName}
+              className={cn('transition-[width] duration-300', scrolled ? 'w-[104px] lg:w-[132px]' : 'w-[112px] lg:w-[156px]')}
+            />
           </Link>
 
           <div className="flex items-center justify-end gap-1 sm:gap-3 lg:gap-6">
-            <nav className="mr-1 hidden items-center gap-6 xl:flex min-[1440px]:mr-4 min-[1440px]:gap-7" aria-label="Store">
-              {[
-                { href: '/about', label: 'About' },
-                { href: '/contact', label: 'Contact' },
-              ].map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={cn(
-                    'whitespace-nowrap font-display text-[13px] font-medium uppercase tracking-label transition-colors hover:text-fg',
-                    pathname === l.href ? 'text-fg' : 'text-fg/75'
-                  )}
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-            <ThemeToggle className="hidden sm:flex" />
-            <button className="p-2" aria-label="Search" onClick={() => setSearchOpen(true)}>
-              <Search className="h-[22px] w-[22px]" strokeWidth={1.6} />
-            </button>
+            <Link href="/contact" className="nav-label hidden text-[11px] opacity-80 hover:opacity-100 xl:inline">
+              Visit the store
+            </Link>
             <Link href="/wishlist" className="relative hidden p-2 sm:block" aria-label="Wishlist">
-              <Heart className="h-[22px] w-[22px]" strokeWidth={1.6} />
+              <Heart className="h-[19px] w-[19px]" strokeWidth={1.3} />
               {hydrated && <Count n={count} />}
             </Link>
-            <button className="flex items-center gap-3 p-2" aria-label="Open bag" onClick={() => setIsCartOpen(true)}>
+            <button className="flex items-center gap-2.5 p-2 lg:-mr-2" aria-label="Open bag" onClick={() => setIsCartOpen(true)}>
               <span className="relative">
-                <ShoppingBag className="h-[22px] w-[22px]" strokeWidth={1.6} />
+                <ShoppingBag className="h-[19px] w-[19px]" strokeWidth={1.3} />
                 {hydrated && <Count n={itemCount} />}
               </span>
-              <span className="hidden font-display text-[13px] uppercase tracking-label text-fg/75 min-[1440px]:inline">Bag</span>
+              <span className="nav-label hidden text-[11px] lg:inline">Bag</span>
             </button>
           </div>
         </div>
 
-        {/* Mobile quick links: Men, new arrivals and the sale, always one tap away */}
-        <nav className="site-x flex h-11 items-center gap-6 border-t border-line lg:hidden" aria-label="Departments">
-          {DEPTS.map((d) => (
-            <Link
-              key={d.key}
-              href={`/${d.key}`}
-              className={cn(
-                'font-display text-[12px] font-medium uppercase tracking-[0.16em]',
-                pathname.startsWith(`/${d.key}`) ? 'text-fg underline underline-offset-[6px]' : 'text-fg/75'
-              )}
-            >
-              {d.label}
-            </Link>
-          ))}
-          <Link href="/shop?sort=newest" className="font-display text-[12px] font-medium uppercase tracking-[0.16em] text-fg/75">
-            New in
-          </Link>
-          <Link
-            href="/sale"
-            className={cn(
-              'ml-auto inline-flex h-8 items-center border px-3 font-display text-[11px] font-semibold uppercase tracking-[0.16em]',
-              pathname.startsWith('/sale') ? 'border-brand bg-brand text-brand-ink' : 'border-brand text-brand'
-            )}
-          >
-            Sale
-          </Link>
-        </nav>
+        {/* Navigation row (desktop) */}
+        <div className="relative hidden lg:block">
+          <Suspense fallback={<div className="h-11" />}>
+            <DesktopNav categories={categories} collections={collections} onOpenChange={setMegaOpen} />
+          </Suspense>
+        </div>
       </header>
 
-      {menuOpen && <MobileMenu storeName={storeName} categories={categories} wishCount={count} onClose={() => setMenuOpen(false)} />}
+      {/* Leave room for the fixed header everywhere except over the homepage hero. */}
+      {!isHome && <div aria-hidden style={{ height: 'var(--hdr)' }} />}
+
+      {menuOpen && (
+        <MobileMenu
+          storeName={storeName}
+          categories={categories}
+          collections={collections}
+          wishCount={count}
+          onSearch={() => setSearchOpen(true)}
+          onClose={() => setMenuOpen(false)}
+        />
+      )}
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>

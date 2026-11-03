@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import '@fontsource-variable/jost';
 import '@fontsource-variable/inter';
+import '@fontsource/cormorant-garamond/400.css';
+import '@fontsource/cormorant-garamond/500.css';
+import '@fontsource/cormorant-garamond/400-italic.css';
 import './globals.css';
 import { themeScript } from '@/components/ui/ThemeToggle';
 import { env } from '@/lib/env';
@@ -15,12 +18,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0C0D11',
+  themeColor: '#FCFBF8',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
