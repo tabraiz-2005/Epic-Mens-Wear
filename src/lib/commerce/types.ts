@@ -138,7 +138,8 @@ export interface StoreSettings {
   /** Optional tall photo used on phones instead of hero_image_url. */
   hero_image_mobile_url: string | null;
   /** Which part of a wide hero photo phones keep: left, center or right. */
-  hero_focus: 'left' | 'center' | 'right';
+  /** Where phones crop the wide hero photo: 0 (left edge) to 100 (right edge), or left/center/right. */
+  hero_focus: string;
   hero_cta_label: string;
   hero_cta_href: string;
   standard_shipping_amount: number; // cents

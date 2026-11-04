@@ -163,7 +163,7 @@ export async function saveSettings(s: Partial<StoreSettings>): Promise<ActionRes
       hero_subtitle: text(s.hero_subtitle),
       hero_image_url: text(s.hero_image_url) || null,
       hero_image_mobile_url: text(s.hero_image_mobile_url) || null,
-      hero_focus: s.hero_focus === 'left' || s.hero_focus === 'right' ? s.hero_focus : 'center',
+      hero_focus: normalizeFocus(s.hero_focus),
       hero_cta_label: text(s.hero_cta_label) || 'Shop the collection',
       hero_cta_href: text(s.hero_cta_href).startsWith('/') ? text(s.hero_cta_href) : '/shop',
       standard_shipping_amount: cents(s.standard_shipping_amount),
@@ -246,4 +246,12 @@ export async function removeTeamMember(userId: string): Promise<ActionResult> {
   } catch (e) {
     return fail(e);
   }
+}
+
+/** 0–100 (percent from the left edge of the photo), stored as text. */
+function normalizeFocus(v: unknown): string {
+  if (v === 'left') return '20';
+  if (v === 'right') return '80';
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? String(n) : '50';
 }

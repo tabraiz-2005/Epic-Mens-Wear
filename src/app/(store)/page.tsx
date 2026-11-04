@@ -7,6 +7,7 @@ import { GarmentArt } from '@/components/store/GarmentArt';
 import { Img } from '@/components/ui/Img';
 import { formatCents } from '@/lib/utils';
 import { mapsEmbed, mapsLink } from '@/lib/commerce/local';
+import { focusPct } from '@/lib/commerce/focus';
 
 function SectionHead({ eyebrow, title, href, linkLabel }: { eyebrow: string; title: string; href?: string; linkLabel?: string }) {
   return (
@@ -31,13 +32,6 @@ function Grid({ products }: { products: Product[] }) {
     </div>
   );
 }
-
-// Which part of a wide hero photo stays in view on a phone.
-const FOCUS: Record<string, string> = {
-  left: 'object-[22%_center]',
-  center: 'object-center',
-  right: 'object-[78%_center]',
-};
 
 const STILL_LIFE = [
   { title: 'Classic Two-Piece Suit', color: '#1E2A3F' },
@@ -79,7 +73,10 @@ export default async function HomePage() {
     <>
       {/* Hero: sits under the transparent header */}
       {heroPhoto ? (
-        <section className="relative h-[88svh] min-h-[560px] overflow-hidden bg-black md:h-[100svh] md:min-h-[620px]">
+        <section
+          className="relative h-[88svh] min-h-[560px] overflow-hidden bg-black md:h-[100svh] md:min-h-[620px]"
+          style={{ ['--hero-focus' as string]: `${focusPct(settings.hero_focus)}% 50%` }}
+        >
           {mobilePhoto ? (
             <>
               <div className="md:hidden">
@@ -90,7 +87,7 @@ export default async function HomePage() {
               </div>
             </>
           ) : (
-            <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className={`object-cover ${FOCUS[settings.hero_focus] ?? FOCUS.center} md:object-center`} />
+            <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover object-[var(--hero-focus)] md:object-center" />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-40% to-black/80 md:from-black/35 md:via-black/5 md:to-black/55" />
           <div className="site-x relative flex h-full flex-col items-center justify-end pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-center text-white md:pb-20 lg:pb-24">

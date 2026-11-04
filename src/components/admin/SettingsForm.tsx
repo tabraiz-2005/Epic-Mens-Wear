@@ -7,6 +7,7 @@ import { saveSettings } from '@/app/admin/_actions/store';
 import type { StoreSettings } from '@/lib/commerce/types';
 import { Field, Notice } from './FormBits';
 import { SingleImage } from './ImageManager';
+import { focusPct } from '@/lib/commerce/focus';
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -94,12 +95,31 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
             <Field label="Phone photo (optional, tall)" hint="A portrait photo just for phones. If empty, phones use the wide photo.">
               <SingleImage value={s.hero_image_mobile_url ?? null} onChange={(u) => set('hero_image_mobile_url', u)} folder="site" aspect="aspect-[9/16]" />
             </Field>
-            <Field label="On phones, keep this part of the wide photo" hint="Pick where the person or product stands in the photo.">
-              <select value={s.hero_focus ?? 'center'} onChange={(e) => set('hero_focus', e.target.value as 'left' | 'center' | 'right')} className="field">
-                <option value="left">Left</option>
-                <option value="center">Centre</option>
-                <option value="right">Right</option>
-              </select>
+            <Field label="On phones, keep this part of the wide photo" hint="Drag until the person sits in the middle of the phone frame.">
+              <div className="flex items-center gap-4">
+                {s.hero_image_url && !s.hero_image_mobile_url && (
+                  <div className="relative aspect-[9/17] w-[84px] shrink-0 overflow-hidden rounded-[12px] border-[3px] border-fg/80 bg-black">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.hero_image_url} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: `${focusPct(s.hero_focus)}% 50%` }} />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={focusPct(s.hero_focus)}
+                    onChange={(e) => set('hero_focus', e.target.value)}
+                    className="w-full accent-[rgb(var(--fg))]"
+                    aria-label="Phone crop position"
+                  />
+                  <div className="mt-1 flex justify-between text-[11px] text-muted">
+                    <span>Left</span>
+                    <span>{focusPct(s.hero_focus)}%</span>
+                    <span>Right</span>
+                  </div>
+                </div>
+              </div>
             </Field>
           </div>
         </div>
