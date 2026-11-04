@@ -92,7 +92,7 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
             <Field label="Hero photo (wide, for computers)">
               <SingleImage value={s.hero_image_url} onChange={(u) => set('hero_image_url', u)} folder="site" aspect="aspect-[16/10]" />
             </Field>
-            <Field label="Phone photo (optional, tall)" hint="A portrait photo just for phones. If empty, phones use the wide photo.">
+            <Field label="Phone photo (tall, portrait)" hint="Shown on phones instead of the wide photo. Best size: 1080 × 1920 px (9:16), with the person in the middle.">
               <SingleImage value={s.hero_image_mobile_url ?? null} onChange={(u) => set('hero_image_mobile_url', u)} folder="site" aspect="aspect-[9/16]" />
             </Field>
             <Field label="On phones, keep this part of the wide photo" hint="Drag until the person sits in the middle of the phone frame.">

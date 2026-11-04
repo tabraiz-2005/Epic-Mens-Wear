@@ -78,15 +78,21 @@ export default async function HomePage() {
           style={{ ['--hero-focus' as string]: `${focusPct(settings.hero_focus)}% 50%` }}
         >
           {mobilePhoto ? (
-            <>
-              <div className="md:hidden">
-                <Img src={mobilePhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover object-center" />
-              </div>
-              <div className="hidden md:block">
-                <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover object-center" />
-              </div>
-            </>
+            // Two separate photos: the browser downloads only the one that matches the screen.
+            <picture>
+              <source media="(max-width: 767px)" srcSet={mobilePhoto} />
+              <source media="(min-width: 768px)" srcSet={heroPhoto} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroPhoto}
+                alt={settings.hero_title}
+                fetchPriority="high"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
+            </picture>
           ) : (
+            // No phone photo uploaded yet: phones crop the wide photo around the chosen point.
             <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover object-[var(--hero-focus)] md:object-center" />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-40% to-black/80 md:from-black/35 md:via-black/5 md:to-black/55" />
