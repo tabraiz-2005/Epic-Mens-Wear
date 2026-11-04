@@ -361,6 +361,7 @@ export function Header({ storeName, categories, collections = [], announcement, 
             <Link href="/contact" className="nav-label hidden text-[11px] opacity-80 hover:opacity-100 xl:inline">
               Visit the store
             </Link>
+            <ThemeToggle variant="plain" />
             <Link href="/wishlist" className="relative hidden p-2 sm:block" aria-label="Wishlist">
               <Heart className="h-[19px] w-[19px]" strokeWidth={1.3} />
               {hydrated && <Count n={count} />}

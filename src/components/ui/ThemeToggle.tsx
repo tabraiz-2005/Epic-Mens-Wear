@@ -9,7 +9,7 @@ export const THEME_KEY = 'epic_theme_v2';
 /** Inline script for <head>: applies the saved theme before first paint. */
 export const themeScript = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
-export function ThemeToggle({ className, variant = 'icon' }: { className?: string; variant?: 'icon' | 'text' }) {
+export function ThemeToggle({ className, variant = 'icon' }: { className?: string; variant?: 'icon' | 'text' | 'plain' }) {
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
 
   useEffect(() => {
@@ -33,6 +33,21 @@ export function ThemeToggle({ className, variant = 'icon' }: { className?: strin
       <button type="button" onClick={toggle} className={cn('inline-flex items-center gap-2 hover:text-fg', className)}>
         {theme === 'dark' ? <Sun className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />}
         {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+      </button>
+    );
+  }
+
+  if (variant === 'plain') {
+    // Bare icon in the header: takes the header's colour (white over the hero photo).
+    return (
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        className={cn('flex items-center justify-center p-2 transition-opacity hover:opacity-70', className)}
+      >
+        {theme === 'dark' ? <Sun className="h-[19px] w-[19px]" strokeWidth={1.3} /> : <Moon className="h-[19px] w-[19px]" strokeWidth={1.3} />}
       </button>
     );
   }
