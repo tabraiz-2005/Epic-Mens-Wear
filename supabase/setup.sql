@@ -1267,4 +1267,17 @@ create table if not exists public.newsletter_subscribers (
 alter table public.newsletter_subscribers enable row level security;
 revoke all on table public.newsletter_subscribers from anon, authenticated;
 
+-- ======== 09_hero_mobile.sql ========
+-- ---------------------------------------------------------------------------
+-- Phone-friendly homepage hero: an optional tall photo for phones, and which
+-- part of the wide photo phones should keep. Safe to run more than once.
+-- ---------------------------------------------------------------------------
+alter table public.store_settings add column if not exists hero_image_mobile_url text;
+alter table public.store_settings add column if not exists hero_focus text not null default 'center';
+alter table public.store_settings drop constraint if exists store_settings_hero_focus_check;
+alter table public.store_settings add constraint store_settings_hero_focus_check
+  check (hero_focus in ('left', 'center', 'right'));
+
+notify pgrst, 'reload schema';
+
 commit;

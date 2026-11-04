@@ -7,6 +7,8 @@ import { WishlistButton } from './WishlistButton';
 
 export function ProductCard({ product, priority }: { product: Product; priority?: boolean }) {
   const main = product.images.find((i) => i.isPrimary) ?? product.images[0];
+  // The photo marked "hover" in the admin shows when the mouse is over the card.
+  const hover = main ? product.images.find((i) => i.isHover && i.url !== main.url) : undefined;
   const soldOut = product.totalStock === 0;
   const badge = soldOut ? 'Sold out' : product.isNewArrival ? 'New' : null;
 
@@ -14,25 +16,34 @@ export function ProductCard({ product, priority }: { product: Product; priority?
     <Link href={`/products/${product.slug}`} className="group block">
       <div className="relative aspect-[4/5] overflow-hidden bg-surface-2">
         {main ? (
-          // One photo with a slow, gentle zoom on hover (no second-photo swap, which looked doubled).
-          <Img
-            src={main.url}
-            alt={main.alt}
-            priority={priority}
-            className="tile-photo object-cover object-top transition-transform duration-[1200ms] ease-out group-hover:scale-[1.035]"
-          />
+          <>
+            {/* Each photo sits on its own solid, isolated layer, so the two never show through each other. */}
+            <div className="absolute inset-0 isolate bg-surface-2">
+              <Img
+                src={main.url}
+                alt={main.alt}
+                priority={priority}
+                className="tile-photo object-cover object-top transition-transform duration-[1200ms] ease-out group-hover:scale-[1.035]"
+              />
+            </div>
+            {hover && (
+              <div className="absolute inset-0 isolate hidden bg-surface-2 opacity-0 transition-opacity duration-500 ease-out [@media(hover:hover)]:block group-hover:opacity-100">
+                <Img src={hover.url} alt={hover.alt} className="tile-photo object-cover object-top" />
+              </div>
+            )}
+          </>
         ) : (
           <GarmentArt category={product.category} title={product.title} color={product.availableColors[0]?.hex} />
         )}
 
         {badge && (
-          <span className="absolute left-3 top-3 text-[10px] font-medium uppercase tracking-[0.18em] text-fg/70 sm:left-4 sm:top-4">
+          <span className="absolute left-3 top-3 z-10 text-[10px] font-medium uppercase tracking-[0.18em] text-fg/70 sm:left-4 sm:top-4">
             {badge}
           </span>
         )}
         <WishlistButton
           product={product}
-          className="absolute right-2 top-2 h-10 w-10 bg-transparent text-fg backdrop-blur-0 hover:scale-110 sm:right-3 sm:top-3"
+          className="absolute right-2 top-2 z-10 h-10 w-10 bg-transparent text-fg backdrop-blur-none hover:scale-110 sm:right-3 sm:top-3"
         />
       </div>
 

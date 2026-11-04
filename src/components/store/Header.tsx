@@ -326,7 +326,10 @@ export function Header({ storeName, categories, collections = [], announcement, 
         >
           <div className="site-x grid h-8 grid-cols-1 items-center text-[11px] tracking-[0.06em] lg:grid-cols-[1fr_auto_1fr]">
             <span className="hidden opacity-70 lg:block">Ship to: United States · USD $</span>
-            <p className="truncate text-center opacity-80">{announcement}</p>
+            <p className="truncate text-center opacity-80">
+              <span className="sm:hidden">{announcement?.split(/\s[·|•]\s/)[0]}</span>
+              <span className="hidden sm:inline">{announcement}</span>
+            </p>
             <div className="hidden justify-end gap-6 opacity-70 lg:flex">
               <Link href="/contact" className="hover:opacity-100">Contact us</Link>
               <Link href="/contact" className="hover:opacity-100">The store</Link>

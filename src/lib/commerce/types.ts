@@ -135,6 +135,10 @@ export interface StoreSettings {
   hero_title: string;
   hero_subtitle: string;
   hero_image_url: string | null;
+  /** Optional tall photo used on phones instead of hero_image_url. */
+  hero_image_mobile_url: string | null;
+  /** Which part of a wide hero photo phones keep: left, center or right. */
+  hero_focus: 'left' | 'center' | 'right';
   hero_cta_label: string;
   hero_cta_href: string;
   standard_shipping_amount: number; // cents
@@ -160,6 +164,8 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   hero_title: 'Sharp Looks, Epic Moments',
   hero_subtitle: 'Formal suits, dress shirts, formal and casual shoes, and the accessories that finish the look.',
   hero_image_url: null,
+  hero_image_mobile_url: null,
+  hero_focus: 'center',
   hero_cta_label: 'Shop menswear',
   hero_cta_href: '/men',
   standard_shipping_amount: 899, // $8.99

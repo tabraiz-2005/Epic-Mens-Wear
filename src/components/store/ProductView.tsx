@@ -48,6 +48,16 @@ export function ProductView({
   const [size, setSize] = useState<string | null>(firstAvailable?.size ?? null);
   const [slide, setSlide] = useState(0);
   const railRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  // Phones: show a slim "Add to bag" bar once the main button has scrolled away.
+  const [showBar, setShowBar] = useState(false);
+  useEffect(() => {
+    const el = actionsRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const sizesForColor = useMemo(
     () =>
@@ -128,7 +138,7 @@ export function ProductView({
         >
           {images.length ? (
             images.map((img, i) => (
-              <div key={img.url + i} className="relative aspect-[4/5] max-h-[72svh] w-full shrink-0 snap-center bg-surface-2 md:max-h-none">
+              <div key={img.url + i} className="relative aspect-[4/5] max-h-[64svh] w-full shrink-0 snap-center bg-surface-2 md:max-h-none">
                 <Img src={img.url} alt={img.alt || product.title} sizes="(max-width:768px) 100vw, 620px" priority={i === 0} className="tile-photo object-cover object-top" />
               </div>
             ))
@@ -160,7 +170,7 @@ export function ProductView({
         </nav>
 
         <div className="mt-4 flex items-start justify-between gap-3">
-          <h1 className="font-serif text-[clamp(28px,2.4vw,36px)] font-normal leading-[1.1]">{product.title}</h1>
+          <h1 className="font-serif text-[clamp(26px,2.4vw,36px)] font-normal leading-[1.1]">{product.title}</h1>
           <div className="flex shrink-0 items-center gap-1">
             <button type="button" onClick={share} aria-label="Share" className="flex h-9 w-9 items-center justify-center text-fg/80 hover:text-fg">
               <Share2 className="h-[18px] w-[18px]" strokeWidth={1.4} />
@@ -247,7 +257,7 @@ export function ProductView({
         </div>
 
         {/* Actions */}
-        <div className="mt-6 space-y-2.5">
+        <div ref={actionsRef} className="mt-6 space-y-2.5">
           <button
             type="button"
             disabled={!canBuy}
@@ -319,6 +329,36 @@ export function ProductView({
               <Link href="/returns" className="underline underline-offset-4">Exchanges & returns</Link>
             </p>
           </Accordion>
+        </div>
+      </div>
+
+      {/* Phones: sticky buy bar */}
+      <div
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 backdrop-blur-md transition-transform duration-300 md:hidden',
+          showBar ? 'translate-y-0' : 'translate-y-full'
+        )}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        aria-hidden={!showBar}
+      >
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px]">{product.title}</p>
+            <p className="truncate text-[12px] text-muted">
+              {formatPrice(price)}
+              {color ? ` · ${color}` : ''}
+              {size ? ` · ${size}` : ''}
+            </p>
+          </div>
+          <button
+            type="button"
+            tabIndex={showBar ? 0 : -1}
+            disabled={!canBuy}
+            onClick={addToBag}
+            className="h-11 shrink-0 bg-fg px-5 font-display text-[11px] font-medium uppercase tracking-[0.2em] text-bg disabled:opacity-40"
+          >
+            {soldOut ? 'Sold out' : !variant ? 'Select size' : !variant.inStock ? 'Unavailable' : 'Add to bag'}
+          </button>
         </div>
       </div>
     </section>

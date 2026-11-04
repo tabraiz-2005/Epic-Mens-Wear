@@ -7,12 +7,25 @@ import { NewsletterForm } from './NewsletterForm';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { mapsLink } from '@/lib/commerce/local';
 
-function Col({ title, children }: { title: string; children: React.ReactNode }) {
+/** A column on computers; a tap-to-open row on phones and tablets. */
+function Col({ title, children, openOnPhone }: { title: string; children: React.ReactNode; openOnPhone?: boolean }) {
   return (
-    <div>
-      <h3 className="nav-label text-[11px] font-semibold text-fg">{title}</h3>
-      <ul className="mt-6 space-y-3.5 text-[14px] text-fg/70">{children}</ul>
-    </div>
+    <>
+      <div className="hidden lg:block">
+        <h3 className="nav-label text-[11px] font-semibold text-fg">{title}</h3>
+        <ul className="mt-6 space-y-3.5 text-[14px] text-fg/70">{children}</ul>
+      </div>
+      <details className="group border-b border-line lg:hidden" open={openOnPhone}>
+        <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between text-fg [&::-webkit-details-marker]:hidden">
+          <span className="nav-label text-[11px] font-semibold">{title}</span>
+          <span aria-hidden className="relative h-3 w-3">
+            <span className="absolute left-0 top-1/2 h-px w-3 bg-current" />
+            <span className="absolute left-1/2 top-0 h-3 w-px bg-current transition-transform duration-200 group-open:scale-y-0" />
+          </span>
+        </summary>
+        <ul className="space-y-4 pb-6 text-[15px] text-fg/75">{children}</ul>
+      </details>
+    </>
   );
 }
 
@@ -39,12 +52,12 @@ export function Footer({ settings, categories }: { settings: StoreSettings; cate
   ].filter(Boolean) as { href: string; label: string; icon: React.ReactNode }[];
 
   return (
-    <footer className="mt-28">
+    <footer className="mt-20 lg:mt-28">
       {/* Newsletter */}
       <section id="newsletter" className="scroll-mt-40 border-y border-line bg-surface">
-        <div className="site-x py-16 text-center lg:py-20">
+        <div className="site-x py-12 text-center sm:py-16 lg:py-20">
           <p className="nav-label text-[11px] text-muted">Newsletter</p>
-          <h2 className="serif-title mx-auto mt-4 max-w-xl text-[34px] sm:text-[42px]">The world of {settings.store_name}</h2>
+          <h2 className="serif-title mx-auto mt-4 max-w-xl text-[30px] sm:text-[42px]">The world of {settings.store_name}</h2>
           <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-muted">
             New arrivals, private sales and styling notes for every occasion, delivered a few times a month.
           </p>
@@ -53,7 +66,7 @@ export function Footer({ settings, categories }: { settings: StoreSettings; cate
       </section>
 
       {/* Columns */}
-      <div className="site-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4 lg:py-20">
+      <div className="site-x py-6 lg:grid lg:grid-cols-4 lg:gap-12 lg:py-20">
         <Col title="Client service">
           <A href="/contact">Contact us</A>
           <A href="/shipping">Shipping</A>
@@ -69,7 +82,7 @@ export function Footer({ settings, categories }: { settings: StoreSettings; cate
           ))}
           <A href="/sale">Sale</A>
         </Col>
-        <Col title="The store">
+        <Col title="The store" openOnPhone>
           {settings.address && (
             <li className="leading-relaxed">
               {maps ? (
@@ -116,7 +129,7 @@ export function Footer({ settings, categories }: { settings: StoreSettings; cate
 
       {/* Bottom bar */}
       <div className="border-t border-line">
-        <div className="site-x grid items-center gap-5 py-7 text-[12px] text-muted lg:grid-cols-[1fr_auto_1fr]">
+        <div className="site-x grid items-center gap-5 py-7 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-[12px] text-muted lg:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 lg:justify-start">
             <span>Ship to: United States · USD $</span>
             <ThemeToggle variant="text" />

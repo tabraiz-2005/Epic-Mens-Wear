@@ -10,9 +10,9 @@ import { mapsEmbed, mapsLink } from '@/lib/commerce/local';
 
 function SectionHead({ eyebrow, title, href, linkLabel }: { eyebrow: string; title: string; href?: string; linkLabel?: string }) {
   return (
-    <div className="mb-10 text-center lg:mb-14">
+    <div className="mb-7 text-center sm:mb-10 lg:mb-14">
       <p className="nav-label text-[11px] text-muted">{eyebrow}</p>
-      <h2 className="serif-title mt-3 text-[34px] sm:text-[42px] lg:text-[48px]">{title}</h2>
+      <h2 className="serif-title mt-2 text-[30px] sm:mt-3 sm:text-[42px] lg:text-[48px]">{title}</h2>
       {href && (
         <Link href={href} className="nav-label mt-5 inline-flex items-center gap-2 text-[11px] underline underline-offset-[6px] hover:opacity-70">
           {linkLabel} <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -24,13 +24,20 @@ function SectionHead({ eyebrow, title, href, linkLabel }: { eyebrow: string; tit
 
 function Grid({ products }: { products: Product[] }) {
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 md:grid-cols-3 lg:gap-x-6 lg:gap-y-14 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 sm:gap-y-10 md:grid-cols-3 lg:gap-x-6 lg:gap-y-14 xl:grid-cols-4">
       {products.map((p, i) => (
         <ProductCard key={p.id} product={p} priority={i < 2} />
       ))}
     </div>
   );
 }
+
+// Which part of a wide hero photo stays in view on a phone.
+const FOCUS: Record<string, string> = {
+  left: 'object-[22%_center]',
+  center: 'object-center',
+  right: 'object-[78%_center]',
+};
 
 const STILL_LIFE = [
   { title: 'Classic Two-Piece Suit', color: '#1E2A3F' },
@@ -55,6 +62,7 @@ export default async function HomePage() {
   // Whole rows only (4 per row on desktop), up to 3 rows.
   const ALL_LIMIT = everything.length >= 12 ? 12 : everything.length >= 4 ? everything.length - (everything.length % 4) : everything.length;
   const heroPhoto = settings.hero_image_url;
+  const mobilePhoto = settings.hero_image_mobile_url;
   const embed = mapsEmbed(settings);
   const maps = mapsLink(settings);
 
@@ -71,18 +79,34 @@ export default async function HomePage() {
     <>
       {/* Hero: sits under the transparent header */}
       {heroPhoto ? (
-        <section className="relative h-[100svh] min-h-[620px] overflow-hidden bg-black">
-          <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-black/55" />
-          <div className="site-x relative flex h-full flex-col items-center justify-end pb-20 text-center text-white lg:pb-24">
-            <p className="nav-label text-[11px] text-white/80">{settings.hero_eyebrow}</p>
-            <h1 className="serif-title mt-4 max-w-4xl text-[46px] sm:text-[64px] lg:text-[84px]">{settings.hero_title}</h1>
-            {settings.hero_subtitle && <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white/85">{settings.hero_subtitle}</p>}
-            <div className="mt-9 flex flex-wrap justify-center gap-8">
-              <Link href={settings.hero_cta_href || '/men'} className="nav-label border-b border-white pb-1.5 text-[12px]">
+        <section className="relative h-[88svh] min-h-[560px] overflow-hidden bg-black md:h-[100svh] md:min-h-[620px]">
+          {mobilePhoto ? (
+            <>
+              <div className="md:hidden">
+                <Img src={mobilePhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover object-center" />
+              </div>
+              <div className="hidden md:block">
+                <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className="object-cover object-center" />
+              </div>
+            </>
+          ) : (
+            <Img src={heroPhoto} alt={settings.hero_title} sizes="100vw" priority className={`object-cover ${FOCUS[settings.hero_focus] ?? FOCUS.center} md:object-center`} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent via-40% to-black/80 md:from-black/35 md:via-black/5 md:to-black/55" />
+          <div className="site-x relative flex h-full flex-col items-center justify-end pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-center text-white md:pb-20 lg:pb-24">
+            <p className="nav-label text-[10px] text-white/80 sm:text-[11px]">{settings.hero_eyebrow}</p>
+            <h1 className="serif-title mt-3 max-w-4xl text-[38px] leading-[1.05] sm:mt-4 sm:text-[64px] lg:text-[84px]">{settings.hero_title}</h1>
+            {settings.hero_subtitle && (
+              <p className="mt-4 hidden max-w-xl text-[15px] leading-relaxed text-white/85 sm:block">{settings.hero_subtitle}</p>
+            )}
+            <div className="mt-7 flex w-full flex-col items-center gap-3 sm:mt-9 sm:w-auto sm:flex-row sm:gap-8">
+              <Link
+                href={settings.hero_cta_href || '/men'}
+                className="nav-label flex h-12 w-full max-w-[320px] items-center justify-center bg-white text-[11px] text-black sm:h-auto sm:w-auto sm:border-b sm:border-white sm:bg-transparent sm:pb-1.5 sm:text-[12px] sm:text-white"
+              >
                 {settings.hero_cta_label || 'Discover the collection'}
               </Link>
-              <Link href="/contact" className="nav-label border-b border-white/50 pb-1.5 text-[12px] text-white/85 hover:border-white">
+              <Link href="/contact" className="nav-label border-b border-white/50 pb-1.5 text-[11px] text-white/85 hover:border-white sm:text-[12px]">
                 Visit the store
               </Link>
             </div>
@@ -119,11 +143,11 @@ export default async function HomePage() {
 
       {/* Shop by category */}
       {catTiles.length > 0 && (
-        <section className="site-x pt-20 lg:pt-28">
+        <section className="site-x pt-14 sm:pt-20 lg:pt-28">
           <SectionHead eyebrow="Ready to wear" title="Shop by category" />
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-5 lg:gap-6">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 lg:gap-6 [&::-webkit-scrollbar]:hidden">
             {catTiles.map(({ c, photo, alt, sample }) => (
-              <Link key={c.slug} href={`/men?category=${c.slug}`} className="group block">
+              <Link key={c.slug} href={`/men?category=${c.slug}`} className="group block w-[62%] shrink-0 snap-start sm:w-auto">
                 <div className="relative aspect-[3/4] overflow-hidden bg-surface-2">
                   {photo ? (
                     <Img src={photo} alt={alt || c.name} sizes="(max-width: 1024px) 50vw, 20vw" className="tile-photo object-cover object-top transition-transform duration-[900ms] group-hover:scale-[1.04]" />
@@ -131,7 +155,7 @@ export default async function HomePage() {
                     <GarmentArt category={c.slug} title={sample?.title} color={sample?.availableColors[0]?.hex} />
                   )}
                 </div>
-                <p className="mt-4 text-center font-serif text-[22px] leading-tight">{c.name}</p>
+                <p className="mt-3 text-center font-serif text-[20px] leading-tight sm:mt-4 sm:text-[22px]">{c.name}</p>
                 <p className="nav-label mt-1 text-center text-[10px] text-muted group-hover:text-fg">Discover</p>
               </Link>
             ))}
@@ -141,7 +165,7 @@ export default async function HomePage() {
 
       {/* New arrivals */}
       {newest.length > 0 && (
-        <section className="site-x pt-20 lg:pt-28">
+        <section className="site-x pt-14 sm:pt-20 lg:pt-28">
           <SectionHead eyebrow="Just in" title="New arrivals" href="/shop?sort=newest" linkLabel="View all" />
           <Grid products={newest} />
         </section>
@@ -149,7 +173,7 @@ export default async function HomePage() {
 
       {/* Collections */}
       {collections.length > 0 && (
-        <section className="site-x pt-20 lg:pt-28">
+        <section className="site-x pt-14 sm:pt-20 lg:pt-28">
           <div className="grid gap-4 md:grid-cols-2 lg:gap-6">
             {collections.slice(0, 2).map((c, i) => (
               <Link key={c.slug} href={`/collections/${c.slug}`} className="group relative block aspect-[4/5] overflow-hidden bg-surface-2 sm:aspect-[5/6]">
@@ -167,9 +191,9 @@ export default async function HomePage() {
                     />
                   </div>
                 )}
-                <div className={`absolute inset-x-0 bottom-0 p-8 text-center lg:p-12 ${c.heroImage ? 'text-white' : 'text-fg'}`}>
+                <div className={`absolute inset-x-0 bottom-0 p-6 text-center sm:p-8 lg:p-12 ${c.heroImage ? 'text-white' : 'text-fg'}`}>
                   <p className="nav-label text-[11px] opacity-75">{c.season || 'Collection'}</p>
-                  <h3 className="serif-title mt-3 text-[34px] lg:text-[44px]">{c.name}</h3>
+                  <h3 className="serif-title mt-2 text-[30px] sm:mt-3 sm:text-[34px] lg:text-[44px]">{c.name}</h3>
                   {c.storyQuote && <p className="mx-auto mt-3 max-w-sm text-[14px] italic opacity-80">{c.storyQuote}</p>}
                   <span className="nav-label mt-6 inline-block border-b border-current pb-1 text-[11px]">Discover the collection</span>
                 </div>
@@ -181,7 +205,7 @@ export default async function HomePage() {
 
       {/* The essentials */}
       {featuredRest.length > 0 && (
-        <section className="site-x pt-20 lg:pt-28">
+        <section className="site-x pt-14 sm:pt-20 lg:pt-28">
           <SectionHead eyebrow="Our picks" title="The essentials" />
           <Grid products={featuredRest} />
         </section>
@@ -189,7 +213,7 @@ export default async function HomePage() {
 
       {/* The collection */}
       {everything.length > 0 && (
-        <section className="site-x pt-20 lg:pt-28">
+        <section className="site-x pt-14 sm:pt-20 lg:pt-28">
           <SectionHead eyebrow="The collection" title="All pieces" href="/men" linkLabel={`Shop all ${all.length}`} />
           <Grid products={everything.slice(0, ALL_LIMIT)} />
         </section>
@@ -197,11 +221,11 @@ export default async function HomePage() {
 
       {/* The store */}
       {settings.address && (
-        <section className="site-x pt-20 lg:pt-28">
+        <section className="site-x pt-14 sm:pt-20 lg:pt-28">
           <div className="grid overflow-hidden border border-line lg:grid-cols-2">
-            <div className="flex flex-col justify-center bg-surface p-10 text-center lg:p-16">
+            <div className="flex flex-col justify-center bg-surface px-6 py-10 text-center lg:p-16">
               <p className="nav-label text-[11px] text-muted">The store</p>
-              <h2 className="serif-title mt-3 text-[34px] lg:text-[44px]">Visit us in San Jose</h2>
+              <h2 className="serif-title mt-3 text-[30px] sm:text-[34px] lg:text-[44px]">Visit us in San Jose</h2>
               <p className="mx-auto mt-5 max-w-sm text-[15px] leading-relaxed text-fg/80">{settings.address}</p>
               {settings.opening_hours && <p className="mt-2 text-[14px] text-muted">{settings.opening_hours}</p>}
               <p className="mx-auto mt-4 max-w-sm text-[14px] leading-relaxed text-muted">
@@ -215,7 +239,7 @@ export default async function HomePage() {
               </div>
             </div>
             {embed && (
-              <div className="relative min-h-[320px] bg-surface-2">
+              <div className="relative min-h-[260px] bg-surface-2 sm:min-h-[320px]">
                 <iframe
                   src={embed}
                   title={`Map of ${settings.store_name}`}
@@ -230,8 +254,8 @@ export default async function HomePage() {
       )}
 
       {/* Services */}
-      <section className="site-x pt-20 lg:pt-28">
-        <div className="grid gap-10 text-center sm:grid-cols-3">
+      <section className="site-x pt-14 sm:pt-20 lg:pt-28">
+        <div className="grid gap-8 text-center sm:grid-cols-3 sm:gap-10">
           {[
             {
               icon: Truck,

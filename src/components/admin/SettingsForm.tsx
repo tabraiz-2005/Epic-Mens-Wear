@@ -76,7 +76,7 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
         <Field label="Text"><input {...t('announcement_text')} className="field" /></Field>
       </Section>
 
-      <Section title="Homepage hero" hint="The big campaign block at the top of the homepage. Portrait or landscape photos both work; the image sits on the right.">
+      <Section title="Homepage hero" hint="The full-screen photo at the top of the homepage. Use a wide (landscape) photo for computers; most visitors are on phones, so also choose what phones should show.">
         <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
           <div className="space-y-4">
             <Field label="Small label"><input {...t('hero_eyebrow')} className="field" /></Field>
@@ -87,9 +87,21 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
               <Field label="Button link" hint="e.g. /men, /shop, /sale, /collections/wedding-season"><input {...t('hero_cta_href')} className="field" /></Field>
             </div>
           </div>
-          <Field label="Hero image">
-            <SingleImage value={s.hero_image_url} onChange={(u) => set('hero_image_url', u)} folder="site" aspect="aspect-[4/5]" />
-          </Field>
+          <div className="space-y-4">
+            <Field label="Hero photo (wide, for computers)">
+              <SingleImage value={s.hero_image_url} onChange={(u) => set('hero_image_url', u)} folder="site" aspect="aspect-[16/10]" />
+            </Field>
+            <Field label="Phone photo (optional, tall)" hint="A portrait photo just for phones. If empty, phones use the wide photo.">
+              <SingleImage value={s.hero_image_mobile_url ?? null} onChange={(u) => set('hero_image_mobile_url', u)} folder="site" aspect="aspect-[9/16]" />
+            </Field>
+            <Field label="On phones, keep this part of the wide photo" hint="Pick where the person or product stands in the photo.">
+              <select value={s.hero_focus ?? 'center'} onChange={(e) => set('hero_focus', e.target.value as 'left' | 'center' | 'right')} className="field">
+                <option value="left">Left</option>
+                <option value="center">Centre</option>
+                <option value="right">Right</option>
+              </select>
+            </Field>
+          </div>
         </div>
       </Section>
 
